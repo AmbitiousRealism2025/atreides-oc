@@ -83,6 +83,168 @@ export interface WorkflowConfig {
 }
 
 /**
+ * Logging configuration for session logging and state persistence.
+ *
+ * ## Configuration Path
+ * ```json
+ * {
+ *   "atreides": {
+ *     "logging": { ... }
+ *   }
+ * }
+ * ```
+ */
+export interface LoggingConfig {
+  /**
+   * Enable file-based session logging to ~/.atreides/logs/.
+   * @default true
+   */
+  enableSessionLogging: boolean;
+
+  /**
+   * Enable state persistence to ~/.atreides/state/.
+   * @default true
+   */
+  enableStatePersistence: boolean;
+
+  /**
+   * Maximum number of log files to keep.
+   * Older files are deleted when limit is exceeded.
+   * @default 50
+   */
+  maxLogFiles: number;
+
+  /**
+   * Maximum number of state files to keep.
+   * Older files are deleted when limit is exceeded.
+   * @default 100
+   */
+  maxStateFiles: number;
+
+  /**
+   * Maximum size per log file in bytes.
+   * Files are rotated when limit is exceeded.
+   * @default 10485760 (10MB)
+   */
+  maxLogFileSizeBytes: number;
+
+  /**
+   * Auto-save interval for state persistence in milliseconds.
+   * Set to 0 to disable auto-save.
+   * @default 30000 (30 seconds)
+   */
+  autoSaveIntervalMs: number;
+
+  /**
+   * Enable PII filtering for logs and persisted state.
+   * Filters email addresses, API keys, tokens, etc.
+   * @default true
+   */
+  enablePiiFiltering: boolean;
+
+  /**
+   * Log levels to include in session logs.
+   * @default ["debug", "info", "warn", "error"]
+   */
+  logLevels: ("debug" | "info" | "warn" | "error")[];
+
+  /**
+   * Custom PII patterns to filter (regex strings).
+   * Added to default patterns (email, API keys, etc.).
+   * @default []
+   */
+  customPiiPatterns: string[];
+}
+
+/**
+ * Think Mode configuration for model switching based on task complexity.
+ *
+ * ## Configuration Path
+ * ```json
+ * {
+ *   "atreides": {
+ *     "thinkMode": { ... }
+ *   }
+ * }
+ * ```
+ */
+export interface ThinkModeConfig {
+  enabled: boolean;
+  defaultModel: string;
+  thinkModel: string;
+  fastModel: string;
+  autoSwitch: boolean;
+  complexityThreshold: number;
+  trackPerformance: boolean;
+}
+
+/**
+ * Notification event types that can trigger user notifications.
+ */
+export type NotificationEventType =
+  | "session.started"
+  | "session.completed"
+  | "phase.transition"
+  | "error.strike"
+  | "error.escalation"
+  | "error.recovery"
+  | "security.blocked"
+  | "security.warning"
+  | "todo.pending"
+  | "compaction.completed"
+  | "custom";
+
+/**
+ * Notification configuration for session event notifications.
+ *
+ * ## Configuration Path
+ * ```json
+ * {
+ *   "atreides": {
+ *     "notifications": { ... }
+ *   }
+ * }
+ * ```
+ */
+export interface NotificationConfig {
+  /**
+   * Enable session notifications globally.
+   * When enabled, important events will be published via OpenCode's notify API.
+   * @default true
+   */
+  enabled: boolean;
+
+  /**
+   * Event types to send notifications for.
+   * Empty array means all events are enabled.
+   * @default ["error.escalation", "session.completed", "security.blocked"]
+   */
+  enabledEvents: NotificationEventType[];
+
+  /**
+   * Minimum severity level to notify.
+   * Events below this severity are suppressed.
+   * Severity order: info < success < warning < error
+   * @default "warning"
+   */
+  minSeverity: "info" | "warning" | "error" | "success";
+
+  /**
+   * Throttle interval in milliseconds.
+   * Prevents notification spam by limiting notifications per event type.
+   * Set to 0 to disable throttling.
+   * @default 1000
+   */
+  throttleMs: number;
+
+  /**
+   * Show notification for each error strike (1-2), not just escalation (3).
+   * @default false
+   */
+  notifyOnEveryStrike: boolean;
+}
+
+/**
  * Security configuration for command validation and file protection.
  *
  * ## Configuration Path
@@ -151,6 +313,13 @@ export interface SecurityConfig {
  *       "blockedPatterns": [],
  *       "warningPatterns": [],
  *       "blockedFiles": []
+ *     },
+ *     "notifications": {
+ *       "enabled": true,
+ *       "enabledEvents": ["error.escalation", "session.completed", "security.blocked"],
+ *       "minSeverity": "warning",
+ *       "throttleMs": 1000,
+ *       "notifyOnEveryStrike": false
  *     }
  *   }
  * }
@@ -160,6 +329,9 @@ export interface Config {
   identity: IdentityConfig;
   workflow: WorkflowConfig;
   security: SecurityConfig;
+  logging: LoggingConfig;
+  thinkMode: ThinkModeConfig;
+  notifications: NotificationConfig;
 }
 
 /**
@@ -203,6 +375,33 @@ const DEFAULT_CONFIG: Config = {
     warningPatterns: [],
     blockedFiles: [],
   },
+  logging: {
+    enableSessionLogging: true,
+    enableStatePersistence: true,
+    maxLogFiles: 50,
+    maxStateFiles: 100,
+    maxLogFileSizeBytes: 10 * 1024 * 1024, // 10MB
+    autoSaveIntervalMs: 30000, // 30 seconds
+    enablePiiFiltering: true,
+    logLevels: ["debug", "info", "warn", "error"],
+    customPiiPatterns: [],
+  },
+  thinkMode: {
+    enabled: true,
+    defaultModel: "claude-sonnet-4",
+    thinkModel: "claude-opus-4",
+    fastModel: "claude-haiku-4-5",
+    autoSwitch: false,
+    complexityThreshold: 0.7,
+    trackPerformance: true,
+  },
+  notifications: {
+    enabled: true,
+    enabledEvents: ["error.escalation", "session.completed", "security.blocked"],
+    minSeverity: "warning",
+    throttleMs: 1000,
+    notifyOnEveryStrike: false,
+  },
 };
 
 /**
@@ -220,6 +419,16 @@ export function createDefaultConfig(): Config {
       blockedPatterns: [...DEFAULT_CONFIG.security.blockedPatterns],
       warningPatterns: [...DEFAULT_CONFIG.security.warningPatterns],
       blockedFiles: [...DEFAULT_CONFIG.security.blockedFiles],
+    },
+    logging: {
+      ...DEFAULT_CONFIG.logging,
+      logLevels: [...DEFAULT_CONFIG.logging.logLevels],
+      customPiiPatterns: [...DEFAULT_CONFIG.logging.customPiiPatterns],
+    },
+    thinkMode: { ...DEFAULT_CONFIG.thinkMode },
+    notifications: {
+      ...DEFAULT_CONFIG.notifications,
+      enabledEvents: [...DEFAULT_CONFIG.notifications.enabledEvents],
     },
   };
 }
@@ -285,6 +494,81 @@ export function validateConfig(config: unknown): ConfigValidationResult {
     }
   }
 
+  // Validate logging section
+  if (cfg.logging) {
+    if (typeof cfg.logging.enableSessionLogging !== "undefined" && typeof cfg.logging.enableSessionLogging !== "boolean") {
+      errors.push({ path: "logging.enableSessionLogging", message: "Must be a boolean" });
+    }
+    if (typeof cfg.logging.enableStatePersistence !== "undefined" && typeof cfg.logging.enableStatePersistence !== "boolean") {
+      errors.push({ path: "logging.enableStatePersistence", message: "Must be a boolean" });
+    }
+    if (typeof cfg.logging.maxLogFiles !== "undefined" && typeof cfg.logging.maxLogFiles !== "number") {
+      errors.push({ path: "logging.maxLogFiles", message: "Must be a number" });
+    }
+    if (typeof cfg.logging.maxStateFiles !== "undefined" && typeof cfg.logging.maxStateFiles !== "number") {
+      errors.push({ path: "logging.maxStateFiles", message: "Must be a number" });
+    }
+    if (typeof cfg.logging.maxLogFileSizeBytes !== "undefined" && typeof cfg.logging.maxLogFileSizeBytes !== "number") {
+      errors.push({ path: "logging.maxLogFileSizeBytes", message: "Must be a number" });
+    }
+    if (typeof cfg.logging.autoSaveIntervalMs !== "undefined" && typeof cfg.logging.autoSaveIntervalMs !== "number") {
+      errors.push({ path: "logging.autoSaveIntervalMs", message: "Must be a number" });
+    }
+    if (typeof cfg.logging.enablePiiFiltering !== "undefined" && typeof cfg.logging.enablePiiFiltering !== "boolean") {
+      errors.push({ path: "logging.enablePiiFiltering", message: "Must be a boolean" });
+    }
+    if (cfg.logging.logLevels !== undefined && !Array.isArray(cfg.logging.logLevels)) {
+      errors.push({ path: "logging.logLevels", message: "Must be an array" });
+    }
+    if (cfg.logging.customPiiPatterns !== undefined && !Array.isArray(cfg.logging.customPiiPatterns)) {
+      errors.push({ path: "logging.customPiiPatterns", message: "Must be an array" });
+    }
+  }
+
+  // Validate thinkMode section
+  if (cfg.thinkMode) {
+    if (typeof cfg.thinkMode.enabled !== "undefined" && typeof cfg.thinkMode.enabled !== "boolean") {
+      errors.push({ path: "thinkMode.enabled", message: "Must be a boolean" });
+    }
+    if (typeof cfg.thinkMode.defaultModel !== "undefined" && typeof cfg.thinkMode.defaultModel !== "string") {
+      errors.push({ path: "thinkMode.defaultModel", message: "Must be a string" });
+    }
+    if (typeof cfg.thinkMode.thinkModel !== "undefined" && typeof cfg.thinkMode.thinkModel !== "string") {
+      errors.push({ path: "thinkMode.thinkModel", message: "Must be a string" });
+    }
+    if (typeof cfg.thinkMode.fastModel !== "undefined" && typeof cfg.thinkMode.fastModel !== "string") {
+      errors.push({ path: "thinkMode.fastModel", message: "Must be a string" });
+    }
+    if (typeof cfg.thinkMode.autoSwitch !== "undefined" && typeof cfg.thinkMode.autoSwitch !== "boolean") {
+      errors.push({ path: "thinkMode.autoSwitch", message: "Must be a boolean" });
+    }
+    if (typeof cfg.thinkMode.complexityThreshold !== "undefined" && typeof cfg.thinkMode.complexityThreshold !== "number") {
+      errors.push({ path: "thinkMode.complexityThreshold", message: "Must be a number" });
+    }
+    if (typeof cfg.thinkMode.trackPerformance !== "undefined" && typeof cfg.thinkMode.trackPerformance !== "boolean") {
+      errors.push({ path: "thinkMode.trackPerformance", message: "Must be a boolean" });
+    }
+  }
+
+  // Validate notifications section
+  if (cfg.notifications) {
+    if (typeof cfg.notifications.enabled !== "undefined" && typeof cfg.notifications.enabled !== "boolean") {
+      errors.push({ path: "notifications.enabled", message: "Must be a boolean" });
+    }
+    if (cfg.notifications.enabledEvents !== undefined && !Array.isArray(cfg.notifications.enabledEvents)) {
+      errors.push({ path: "notifications.enabledEvents", message: "Must be an array" });
+    }
+    if (typeof cfg.notifications.minSeverity !== "undefined" && !["info", "warning", "error", "success"].includes(cfg.notifications.minSeverity)) {
+      errors.push({ path: "notifications.minSeverity", message: "Must be one of: info, warning, error, success" });
+    }
+    if (typeof cfg.notifications.throttleMs !== "undefined" && typeof cfg.notifications.throttleMs !== "number") {
+      errors.push({ path: "notifications.throttleMs", message: "Must be a number" });
+    }
+    if (typeof cfg.notifications.notifyOnEveryStrike !== "undefined" && typeof cfg.notifications.notifyOnEveryStrike !== "boolean") {
+      errors.push({ path: "notifications.notifyOnEveryStrike", message: "Must be a boolean" });
+    }
+  }
+
   return { valid: errors.length === 0, errors };
 }
 
@@ -311,7 +595,10 @@ export async function loadConfig(projectPath: string): Promise<Config> {
       // Continue with valid fields, use defaults for invalid ones
     }
 
-    const securityConfig = atreidesConfig.security ?? {};
+    const securityConfig: Partial<SecurityConfig> = atreidesConfig.security ?? {};
+    const loggingConfig: Partial<LoggingConfig> = atreidesConfig.logging ?? {};
+    const thinkModeConfig: Partial<ThinkModeConfig> = atreidesConfig.thinkMode ?? {};
+    const notificationsConfig: Partial<NotificationConfig> = atreidesConfig.notifications ?? {};
     return {
       ...DEFAULT_CONFIG,
       ...atreidesConfig,
@@ -323,6 +610,18 @@ export async function loadConfig(projectPath: string): Promise<Config> {
         blockedPatterns: [...(securityConfig.blockedPatterns ?? DEFAULT_CONFIG.security.blockedPatterns)],
         warningPatterns: [...(securityConfig.warningPatterns ?? DEFAULT_CONFIG.security.warningPatterns)],
         blockedFiles: [...(securityConfig.blockedFiles ?? DEFAULT_CONFIG.security.blockedFiles)],
+      },
+      logging: {
+        ...DEFAULT_CONFIG.logging,
+        ...loggingConfig,
+        logLevels: [...(loggingConfig.logLevels ?? DEFAULT_CONFIG.logging.logLevels)],
+        customPiiPatterns: [...(loggingConfig.customPiiPatterns ?? DEFAULT_CONFIG.logging.customPiiPatterns)],
+      },
+      thinkMode: { ...DEFAULT_CONFIG.thinkMode, ...thinkModeConfig },
+      notifications: {
+        ...DEFAULT_CONFIG.notifications,
+        ...notificationsConfig,
+        enabledEvents: [...(notificationsConfig.enabledEvents ?? DEFAULT_CONFIG.notifications.enabledEvents)],
       },
     };
   } catch {

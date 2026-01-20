@@ -1,0 +1,128 @@
+---
+name: {{name}}
+contextType: {{contextType}}
+enabled: {{enabled}}
+description: {{description}}
+---
+
+# Refactor Skill
+
+Code refactoring and restructuring capability for safe code transformations.
+
+## Purpose
+
+This skill provides the ability to:
+- Apply systematic code refactoring patterns
+- Restructure code while preserving behavior
+- Rename symbols across the codebase
+- Extract functions, methods, and modules
+- Simplify complex code structures
+
+## Context Type
+
+**{{contextType}}**: Executes in a forked context, suitable for parallel refactoring analysis and planning that can be reviewed before application.
+
+## Refactoring Categories
+
+### Extraction Refactorings
+
+- **Extract Function**: Move code block to a new function
+- **Extract Variable**: Create named variable for expression
+- **Extract Interface**: Define interface from concrete type
+- **Extract Module**: Split file into multiple modules
+- **Extract Constant**: Move magic values to named constants
+
+### Rename Refactorings
+
+- **Rename Symbol**: Rename variable, function, class, etc.
+- **Rename File**: Rename file with import updates
+- **Rename Module**: Update module name and references
+
+### Structural Refactorings
+
+- **Move to File**: Relocate code to different file
+- **Inline Function**: Replace function call with body
+- **Inline Variable**: Replace variable with expression
+- **Convert Function**: Change function style (arrow, method, etc.)
+
+### Simplification Refactorings
+
+- **Simplify Conditional**: Reduce complex if/else chains
+- **Remove Dead Code**: Eliminate unreachable code
+- **Consolidate Duplicates**: DRY up repeated patterns
+- **Flatten Nesting**: Reduce excessive indentation
+
+## Refactoring Process
+
+### Analysis Phase
+1. Identify refactoring target and scope
+2. Analyze dependencies and usage
+3. Plan transformation steps
+4. Identify potential breaking changes
+
+### Validation Phase
+1. Verify behavior preservation
+2. Check for naming conflicts
+3. Validate type safety
+4. Review test coverage of affected code
+
+### Application Phase
+1. Apply changes incrementally
+2. Validate after each step
+3. Run affected tests
+4. Report results and any issues
+
+## Output Format
+
+Refactoring plans should be structured for review:
+
+```markdown
+## Refactoring Plan
+
+### Target
+- Type: Extract Function
+- Source: path/to/file.ts:42-58
+- Scope: Local to module
+
+### Changes Required
+1. Create new function `calculateTotal` at line 40
+2. Replace inline code with function call
+3. Update 2 test files with new function
+
+### Impact Analysis
+- Files affected: 3
+- Tests to update: 2
+- Breaking changes: None
+
+### Validation Steps
+1. Run unit tests: `npm test path/to/file`
+2. Type check: `tsc --noEmit`
+3. Lint: `npm run lint`
+```
+
+## Tool Permissions
+
+The refactor skill uses analysis and modification tools:
+- `read`: Analyze source code and dependencies
+- `edit`: Apply refactoring transformations
+- `grep_search`: Find symbol references
+- `file_search`: Locate affected files
+- `bash`: Run validation commands (tests, lint)
+
+**Requires**: Validation step before finalizing changes
+
+## Guidelines
+
+- Always analyze before modifying
+- Preserve existing behavior (semantic equivalence)
+- Make smallest possible changes to achieve goal
+- Validate with tests after each transformation
+- Report all affected files upfront
+- Coordinate with LSP skill for precise references
+- Document any manual follow-up required
+- Prefer incremental changes over large rewrites
+- Create checkpoint before significant refactors
+
+<!-- CUSTOM IMPLEMENTATION START -->
+<!-- User customizations preserved here -->
+<!-- CUSTOM IMPLEMENTATION END -->

@@ -14,9 +14,21 @@ import {
   generateMVPSkills,
   MVP_SKILL_NAMES,
   MVP_SKILL_CONFIGS,
+  ADVANCED_SKILL_NAMES,
+  ADVANCED_SKILL_CONFIGS,
+  EXTENDED_SKILL_NAMES,
+  EXTENDED_SKILL_CONFIGS,
+  ALL_SKILL_NAMES,
   isMVPSkill,
+  isAdvancedSkill,
+  isExtendedSkill,
   getDefaultSkillConfig,
+  getDefaultAdvancedSkillConfig,
+  getDefaultExtendedSkillConfig,
   getAllMVPSkillConfigs,
+  getAllAdvancedSkillConfigs,
+  getAllExtendedSkillConfigs,
+  getAllSkillConfigs,
   type SkillConfig,
   type SkillGenerationOptions,
 } from "../../src/generators/index.js";
@@ -139,6 +151,263 @@ describe("Skill Generator Module", () => {
       expect(names).toContain("orchestrate");
       expect(names).toContain("explore");
       expect(names).toContain("validate");
+    });
+  });
+
+  // ===========================================================================
+  // Advanced Skills - Type Guards and Constants
+  // ===========================================================================
+
+  describe("isAdvancedSkill", () => {
+    test("returns true for valid advanced skill names", () => {
+      expect(isAdvancedSkill("lsp")).toBe(true);
+      expect(isAdvancedSkill("refactor")).toBe(true);
+      expect(isAdvancedSkill("checkpoint")).toBe(true);
+      expect(isAdvancedSkill("tdd")).toBe(true);
+    });
+
+    test("returns false for MVP skill names", () => {
+      expect(isAdvancedSkill("base")).toBe(false);
+      expect(isAdvancedSkill("orchestrate")).toBe(false);
+      expect(isAdvancedSkill("explore")).toBe(false);
+      expect(isAdvancedSkill("validate")).toBe(false);
+    });
+
+    test("returns false for unknown skill names", () => {
+      expect(isAdvancedSkill("unknown")).toBe(false);
+      expect(isAdvancedSkill("")).toBe(false);
+    });
+  });
+
+  describe("ADVANCED_SKILL_NAMES", () => {
+    test("contains exactly 4 advanced skills", () => {
+      expect(ADVANCED_SKILL_NAMES.length).toBe(4);
+    });
+
+    test("contains all expected advanced skills", () => {
+      expect(ADVANCED_SKILL_NAMES).toContain("lsp");
+      expect(ADVANCED_SKILL_NAMES).toContain("refactor");
+      expect(ADVANCED_SKILL_NAMES).toContain("checkpoint");
+      expect(ADVANCED_SKILL_NAMES).toContain("tdd");
+    });
+  });
+
+  describe("ALL_SKILL_NAMES", () => {
+    test("contains all 12 skills (MVP + Advanced + Extended)", () => {
+      expect(ALL_SKILL_NAMES.length).toBe(12);
+    });
+
+    test("contains all MVP, advanced, and extended skills", () => {
+      // MVP skills
+      expect(ALL_SKILL_NAMES).toContain("base");
+      expect(ALL_SKILL_NAMES).toContain("orchestrate");
+      expect(ALL_SKILL_NAMES).toContain("explore");
+      expect(ALL_SKILL_NAMES).toContain("validate");
+      // Advanced skills
+      expect(ALL_SKILL_NAMES).toContain("lsp");
+      expect(ALL_SKILL_NAMES).toContain("refactor");
+      expect(ALL_SKILL_NAMES).toContain("checkpoint");
+      expect(ALL_SKILL_NAMES).toContain("tdd");
+      // Extended skills
+      expect(ALL_SKILL_NAMES).toContain("parallel-explore");
+      expect(ALL_SKILL_NAMES).toContain("incremental-refactor");
+      expect(ALL_SKILL_NAMES).toContain("doc-sync");
+      expect(ALL_SKILL_NAMES).toContain("quality-gate");
+    });
+  });
+
+  describe("ADVANCED_SKILL_CONFIGS", () => {
+    test("has config for each advanced skill", () => {
+      for (const name of ADVANCED_SKILL_NAMES) {
+        expect(ADVANCED_SKILL_CONFIGS[name]).toBeDefined();
+      }
+    });
+
+    test("main context for checkpoint skill only", () => {
+      expect(ADVANCED_SKILL_CONFIGS.checkpoint.contextType).toBe("main");
+    });
+
+    test("fork context for lsp, refactor, and tdd skills", () => {
+      expect(ADVANCED_SKILL_CONFIGS.lsp.contextType).toBe("fork");
+      expect(ADVANCED_SKILL_CONFIGS.refactor.contextType).toBe("fork");
+      expect(ADVANCED_SKILL_CONFIGS.tdd.contextType).toBe("fork");
+    });
+
+    test("all advanced skills enabled by default", () => {
+      for (const name of ADVANCED_SKILL_NAMES) {
+        expect(ADVANCED_SKILL_CONFIGS[name].enabled).toBe(true);
+      }
+    });
+
+    test("all advanced skills have descriptions", () => {
+      for (const name of ADVANCED_SKILL_NAMES) {
+        expect(ADVANCED_SKILL_CONFIGS[name].description).toBeDefined();
+        expect(ADVANCED_SKILL_CONFIGS[name].description.length).toBeGreaterThan(10);
+      }
+    });
+  });
+
+  describe("getDefaultAdvancedSkillConfig", () => {
+    test("returns a copy of the default config", () => {
+      const config1 = getDefaultAdvancedSkillConfig("lsp");
+      const config2 = getDefaultAdvancedSkillConfig("lsp");
+
+      expect(config1).toEqual(config2);
+      expect(config1).not.toBe(config2); // Should be different objects
+    });
+
+    test("returns correct config for each advanced skill", () => {
+      expect(getDefaultAdvancedSkillConfig("lsp").name).toBe("lsp");
+      expect(getDefaultAdvancedSkillConfig("refactor").name).toBe("refactor");
+      expect(getDefaultAdvancedSkillConfig("checkpoint").name).toBe("checkpoint");
+      expect(getDefaultAdvancedSkillConfig("tdd").name).toBe("tdd");
+    });
+  });
+
+  describe("getAllAdvancedSkillConfigs", () => {
+    test("returns all 4 advanced skill configs", () => {
+      const configs = getAllAdvancedSkillConfigs();
+      expect(configs.length).toBe(4);
+    });
+
+    test("returns configs for all advanced skills", () => {
+      const configs = getAllAdvancedSkillConfigs();
+      const names = configs.map((c) => c.name);
+
+      expect(names).toContain("lsp");
+      expect(names).toContain("refactor");
+      expect(names).toContain("checkpoint");
+      expect(names).toContain("tdd");
+    });
+  });
+
+  // ===========================================================================
+  // Extended Skill Types and Configs (Post-MVP Phase 2, Set 2)
+  // ===========================================================================
+
+  describe("EXTENDED_SKILL_NAMES", () => {
+    test("has 4 extended skills", () => {
+      expect(EXTENDED_SKILL_NAMES.length).toBe(4);
+    });
+
+    test("contains all expected extended skills", () => {
+      expect(EXTENDED_SKILL_NAMES).toContain("parallel-explore");
+      expect(EXTENDED_SKILL_NAMES).toContain("incremental-refactor");
+      expect(EXTENDED_SKILL_NAMES).toContain("doc-sync");
+      expect(EXTENDED_SKILL_NAMES).toContain("quality-gate");
+    });
+  });
+
+  describe("isExtendedSkill", () => {
+    test("returns true for extended skills", () => {
+      expect(isExtendedSkill("parallel-explore")).toBe(true);
+      expect(isExtendedSkill("incremental-refactor")).toBe(true);
+      expect(isExtendedSkill("doc-sync")).toBe(true);
+      expect(isExtendedSkill("quality-gate")).toBe(true);
+    });
+
+    test("returns false for MVP skills", () => {
+      expect(isExtendedSkill("base")).toBe(false);
+      expect(isExtendedSkill("orchestrate")).toBe(false);
+    });
+
+    test("returns false for advanced skills", () => {
+      expect(isExtendedSkill("lsp")).toBe(false);
+      expect(isExtendedSkill("refactor")).toBe(false);
+    });
+
+    test("returns false for unknown skills", () => {
+      expect(isExtendedSkill("unknown")).toBe(false);
+    });
+  });
+
+  describe("EXTENDED_SKILL_CONFIGS", () => {
+    test("has config for each extended skill", () => {
+      for (const name of EXTENDED_SKILL_NAMES) {
+        expect(EXTENDED_SKILL_CONFIGS[name]).toBeDefined();
+      }
+    });
+
+    test("fork context for all extended skills", () => {
+      expect(EXTENDED_SKILL_CONFIGS["parallel-explore"].contextType).toBe("fork");
+      expect(EXTENDED_SKILL_CONFIGS["incremental-refactor"].contextType).toBe("fork");
+      expect(EXTENDED_SKILL_CONFIGS["doc-sync"].contextType).toBe("fork");
+      expect(EXTENDED_SKILL_CONFIGS["quality-gate"].contextType).toBe("fork");
+    });
+
+    test("all extended skills enabled by default", () => {
+      for (const name of EXTENDED_SKILL_NAMES) {
+        expect(EXTENDED_SKILL_CONFIGS[name].enabled).toBe(true);
+      }
+    });
+
+    test("all extended skills have descriptions", () => {
+      for (const name of EXTENDED_SKILL_NAMES) {
+        expect(EXTENDED_SKILL_CONFIGS[name].description).toBeDefined();
+        expect(EXTENDED_SKILL_CONFIGS[name].description.length).toBeGreaterThan(10);
+      }
+    });
+  });
+
+  describe("getDefaultExtendedSkillConfig", () => {
+    test("returns a copy of the default config", () => {
+      const config1 = getDefaultExtendedSkillConfig("parallel-explore");
+      const config2 = getDefaultExtendedSkillConfig("parallel-explore");
+
+      expect(config1).toEqual(config2);
+      expect(config1).not.toBe(config2); // Should be different objects
+    });
+
+    test("returns correct config for each extended skill", () => {
+      expect(getDefaultExtendedSkillConfig("parallel-explore").name).toBe("parallel-explore");
+      expect(getDefaultExtendedSkillConfig("incremental-refactor").name).toBe("incremental-refactor");
+      expect(getDefaultExtendedSkillConfig("doc-sync").name).toBe("doc-sync");
+      expect(getDefaultExtendedSkillConfig("quality-gate").name).toBe("quality-gate");
+    });
+  });
+
+  describe("getAllExtendedSkillConfigs", () => {
+    test("returns all 4 extended skill configs", () => {
+      const configs = getAllExtendedSkillConfigs();
+      expect(configs.length).toBe(4);
+    });
+
+    test("returns configs for all extended skills", () => {
+      const configs = getAllExtendedSkillConfigs();
+      const names = configs.map((c) => c.name);
+
+      expect(names).toContain("parallel-explore");
+      expect(names).toContain("incremental-refactor");
+      expect(names).toContain("doc-sync");
+      expect(names).toContain("quality-gate");
+    });
+  });
+
+  describe("getAllSkillConfigs", () => {
+    test("returns all 12 skill configs", () => {
+      const configs = getAllSkillConfigs();
+      expect(configs.length).toBe(12);
+    });
+
+    test("returns configs for all skills", () => {
+      const configs = getAllSkillConfigs();
+      const names = configs.map((c) => c.name);
+
+      // MVP
+      expect(names).toContain("base");
+      expect(names).toContain("orchestrate");
+      expect(names).toContain("explore");
+      expect(names).toContain("validate");
+      // Advanced
+      expect(names).toContain("lsp");
+      expect(names).toContain("refactor");
+      expect(names).toContain("checkpoint");
+      expect(names).toContain("tdd");
+      // Extended
+      expect(names).toContain("parallel-explore");
+      expect(names).toContain("incremental-refactor");
+      expect(names).toContain("doc-sync");
+      expect(names).toContain("quality-gate");
     });
   });
 
@@ -728,6 +997,190 @@ description: {{description}}
 
       const template = await generator.loadTemplate("test-skill");
       expect(template).toContain("# Test Skill");
+    });
+  });
+
+  // ===========================================================================
+  // Advanced Skills - Template Loading and Generation
+  // ===========================================================================
+
+  describe("Advanced Skill Template Loading", () => {
+    test("loads templates for all advanced skills", async () => {
+      const generator = createSkillGenerator({
+        outputDir: testDir,
+        templateDir,
+      });
+
+      for (const name of ADVANCED_SKILL_NAMES) {
+        const template = await generator.loadTemplate(name);
+        expect(template).toBeDefined();
+        expect(template.length).toBeGreaterThan(100);
+        expect(template).toContain("{{name}}");
+        expect(template).toContain("{{contextType}}");
+      }
+    });
+
+    test("loads lsp skill template with correct content", async () => {
+      const generator = createSkillGenerator({
+        outputDir: testDir,
+        templateDir,
+      });
+
+      const template = await generator.loadTemplate("lsp");
+      expect(template).toContain("# LSP Skill");
+      expect(template).toContain("Language Server Protocol");
+    });
+
+    test("loads refactor skill template with correct content", async () => {
+      const generator = createSkillGenerator({
+        outputDir: testDir,
+        templateDir,
+      });
+
+      const template = await generator.loadTemplate("refactor");
+      expect(template).toContain("# Refactor Skill");
+      expect(template).toContain("refactoring");
+    });
+
+    test("loads checkpoint skill template with correct content", async () => {
+      const generator = createSkillGenerator({
+        outputDir: testDir,
+        templateDir,
+      });
+
+      const template = await generator.loadTemplate("checkpoint");
+      expect(template).toContain("# Checkpoint Skill");
+      expect(template).toContain("checkpointing");
+    });
+
+    test("loads tdd skill template with correct content", async () => {
+      const generator = createSkillGenerator({
+        outputDir: testDir,
+        templateDir,
+      });
+
+      const template = await generator.loadTemplate("tdd");
+      expect(template).toContain("# TDD Skill");
+      expect(template).toContain("Test-Driven Development");
+    });
+  });
+
+  describe("Advanced Skill File Generation", () => {
+    test("generates lsp skill file with fork context", async () => {
+      const generator = createSkillGenerator({
+        outputDir: testDir,
+        templateDir,
+      });
+
+      const config = getDefaultAdvancedSkillConfig("lsp");
+      const result = await generator.generateSkillFile(config);
+
+      expect(result.created).toBe(true);
+      expect(result.error).toBeUndefined();
+
+      const filePath = join(testDir, ".opencode", "skill", "lsp", "SKILL.md");
+      const content = await readFile(filePath, "utf-8");
+      expect(content).toContain("name: lsp");
+      expect(content).toContain("contextType: fork");
+    });
+
+    test("generates refactor skill file with fork context", async () => {
+      const generator = createSkillGenerator({
+        outputDir: testDir,
+        templateDir,
+      });
+
+      const config = getDefaultAdvancedSkillConfig("refactor");
+      const result = await generator.generateSkillFile(config);
+
+      expect(result.created).toBe(true);
+      expect(result.error).toBeUndefined();
+
+      const filePath = join(testDir, ".opencode", "skill", "refactor", "SKILL.md");
+      const content = await readFile(filePath, "utf-8");
+      expect(content).toContain("name: refactor");
+      expect(content).toContain("contextType: fork");
+    });
+
+    test("generates checkpoint skill file with main context", async () => {
+      const generator = createSkillGenerator({
+        outputDir: testDir,
+        templateDir,
+      });
+
+      const config = getDefaultAdvancedSkillConfig("checkpoint");
+      const result = await generator.generateSkillFile(config);
+
+      expect(result.created).toBe(true);
+      expect(result.error).toBeUndefined();
+
+      const filePath = join(testDir, ".opencode", "skill", "checkpoint", "SKILL.md");
+      const content = await readFile(filePath, "utf-8");
+      expect(content).toContain("name: checkpoint");
+      expect(content).toContain("contextType: main");
+    });
+
+    test("generates tdd skill file with fork context", async () => {
+      const generator = createSkillGenerator({
+        outputDir: testDir,
+        templateDir,
+      });
+
+      const config = getDefaultAdvancedSkillConfig("tdd");
+      const result = await generator.generateSkillFile(config);
+
+      expect(result.created).toBe(true);
+      expect(result.error).toBeUndefined();
+
+      const filePath = join(testDir, ".opencode", "skill", "tdd", "SKILL.md");
+      const content = await readFile(filePath, "utf-8");
+      expect(content).toContain("name: tdd");
+      expect(content).toContain("contextType: fork");
+    });
+
+    test("generates all 4 advanced skill files", async () => {
+      const generator = createSkillGenerator({
+        outputDir: testDir,
+        templateDir,
+      });
+
+      const configs = getAllAdvancedSkillConfigs();
+      const results = await generator.generateSkillFiles(configs);
+
+      expect(results.length).toBe(4);
+      expect(results.every((r) => r.created)).toBe(true);
+      expect(results.every((r) => !r.error)).toBe(true);
+
+      // Verify all files exist
+      for (const name of ADVANCED_SKILL_NAMES) {
+        const filePath = join(testDir, ".opencode", "skill", name, "SKILL.md");
+        const fileExists = await access(filePath)
+          .then(() => true)
+          .catch(() => false);
+        expect(fileExists).toBe(true);
+      }
+    });
+
+    test("generates all 12 skills (MVP + Advanced + Extended) together", async () => {
+      const generator = createSkillGenerator({
+        outputDir: testDir,
+        templateDir,
+      });
+
+      const configs = getAllSkillConfigs();
+      const results = await generator.generateSkillFiles(configs);
+
+      expect(results.length).toBe(12);
+      expect(results.every((r) => r.created)).toBe(true);
+
+      // Verify all files exist
+      for (const name of ALL_SKILL_NAMES) {
+        const filePath = join(testDir, ".opencode", "skill", name, "SKILL.md");
+        const fileExists = await access(filePath)
+          .then(() => true)
+          .catch(() => false);
+        expect(fileExists).toBe(true);
+      }
     });
   });
 });

@@ -1,0 +1,158 @@
+---
+name: {{name}}
+contextType: {{contextType}}
+enabled: {{enabled}}
+description: {{description}}
+---
+
+# TDD Skill
+
+Test-Driven Development workflow capability for quality-first implementation.
+
+## Purpose
+
+This skill provides the ability to:
+- Guide Red-Green-Refactor development cycles
+- Generate test cases before implementation
+- Validate implementation against test specifications
+- Track test coverage progression
+- Enforce test-first discipline
+
+## Context Type
+
+**{{contextType}}**: Executes in a forked context, suitable for parallel test execution and validation cycles.
+
+## TDD Workflow Phases
+
+### Red Phase (Write Failing Test)
+
+1. Analyze requirements and acceptance criteria
+2. Design test cases covering expected behavior
+3. Write minimal test that captures requirement
+4. Verify test fails for the right reason
+5. Document expected behavior in test
+
+### Green Phase (Make Test Pass)
+
+1. Write minimum code to pass the test
+2. Focus on correctness, not elegance
+3. Avoid premature optimization
+4. Run test to verify it passes
+5. Commit passing implementation
+
+### Refactor Phase (Improve Code)
+
+1. Identify code smells and duplication
+2. Apply refactoring patterns
+3. Maintain test coverage
+4. Verify tests still pass after changes
+5. Iterate until clean
+
+## Test Generation
+
+### Unit Test Template
+
+```typescript
+describe('ComponentName', () => {
+  describe('methodName', () => {
+    it('should [expected behavior] when [condition]', () => {
+      // Arrange
+      const input = /* test input */;
+
+      // Act
+      const result = component.methodName(input);
+
+      // Assert
+      expect(result).toEqual(/* expected */);
+    });
+  });
+});
+```
+
+### Test Case Categories
+
+- **Happy Path**: Normal expected usage
+- **Edge Cases**: Boundary conditions
+- **Error Cases**: Invalid inputs, failures
+- **Integration**: Component interactions
+
+## Output Format
+
+TDD progress should be clearly tracked:
+
+```markdown
+## TDD Cycle Report
+
+### Current Phase: Green
+
+### Test Status
+- Total tests: 12
+- Passing: 11
+- Failing: 1
+- Coverage: 85%
+
+### Current Focus
+- Test: `should calculate total with discount`
+- File: src/pricing/calculator.test.ts:42
+- Status: FAILING (expected)
+
+### Implementation Progress
+1. [x] Write test for base calculation
+2. [x] Implement base calculation
+3. [x] Write test for discount
+4. [ ] Implement discount logic
+5. [ ] Refactor calculation module
+
+### Next Step
+Implement `applyDiscount()` method to pass current test.
+```
+
+## Test Patterns
+
+### Arrange-Act-Assert (AAA)
+
+Structure all tests with clear phases:
+- **Arrange**: Set up test data and dependencies
+- **Act**: Execute the code under test
+- **Assert**: Verify expected outcomes
+
+### Given-When-Then (BDD)
+
+For behavior-focused tests:
+- **Given**: Initial context and preconditions
+- **When**: Action or event occurs
+- **Then**: Expected outcome
+
+### Test Isolation
+
+- Each test should be independent
+- Clean up state between tests
+- Avoid test interdependencies
+- Mock external dependencies
+
+## Tool Permissions
+
+The TDD skill uses test-focused tools:
+- `read`: Analyze source and test files
+- `edit`: Write tests and implementation
+- `bash`: Run test commands
+- `grep_search`: Find related tests and code
+
+**Required**: Test runner access (jest, vitest, pytest, etc.)
+
+## Guidelines
+
+- Always write the test before implementation
+- Keep tests focused and single-purpose
+- Make tests readable as documentation
+- Fail tests for the right reason (not syntax errors)
+- Commit at each phase transition
+- Track coverage but don't obsess over 100%
+- Refactor both production and test code
+- Use descriptive test names that explain intent
+- Coordinate with validate skill for comprehensive checks
+- Create checkpoint before refactor phase
+
+<!-- CUSTOM IMPLEMENTATION START -->
+<!-- User customizations preserved here -->
+<!-- CUSTOM IMPLEMENTATION END -->

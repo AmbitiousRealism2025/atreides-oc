@@ -1,0 +1,114 @@
+---
+name: {{name}}
+contextType: {{contextType}}
+enabled: {{enabled}}
+description: {{description}}
+---
+
+# LSP Skill
+
+Language Server Protocol integration capability for intelligent code analysis.
+
+## Purpose
+
+This skill provides the ability to:
+- Leverage LSP for precise code navigation and analysis
+- Find definitions, references, and implementations
+- Access symbol information and type hierarchies
+- Provide intelligent code completion context
+- Detect and surface diagnostics (errors, warnings)
+
+## Context Type
+
+**{{contextType}}**: Executes in a forked context, suitable for parallel LSP queries that don't modify session state.
+
+## LSP Capabilities
+
+### Navigation
+
+- **Go to Definition**: Find where symbols are defined
+- **Find References**: Locate all usages of a symbol
+- **Go to Implementation**: Find concrete implementations of interfaces
+- **Call Hierarchy**: Trace incoming/outgoing calls
+
+### Symbol Analysis
+
+- **Document Symbols**: List all symbols in a file
+- **Workspace Symbols**: Search symbols across the codebase
+- **Type Hierarchy**: Explore inheritance relationships
+- **Hover Information**: Get type info and documentation
+
+### Diagnostics
+
+- **Error Detection**: Surface syntax and semantic errors
+- **Warning Analysis**: Identify potential issues
+- **Code Actions**: Suggest available quick fixes
+- **Diagnostic Severity**: Categorize issues by importance
+
+## Integration Points
+
+### Supported Language Servers
+
+The skill integrates with common language servers:
+- **TypeScript/JavaScript**: tsserver, typescript-language-server
+- **Python**: pyright, pylsp
+- **Go**: gopls
+- **Rust**: rust-analyzer
+- **Java**: Eclipse JDT, Java Language Server
+
+### Fallback Behavior
+
+When LSP is unavailable:
+- Fall back to regex-based search
+- Use file pattern matching
+- Leverage grep-based analysis
+- Report degraded capability to orchestrator
+
+## Output Format
+
+LSP results should be structured for actionable use:
+
+```markdown
+## LSP Analysis Results
+
+### Definition
+- Symbol: `functionName`
+- Location: path/to/file.ts:42:10
+
+### References (3 found)
+1. path/to/file1.ts:15 - Usage context
+2. path/to/file2.ts:88 - Usage context
+3. path/to/test.ts:23 - Test usage
+
+### Diagnostics
+- ERROR: path/to/file.ts:42 - Description
+- WARN: path/to/file.ts:50 - Description
+
+### Type Information
+- Type: `(param: string) => Promise<Result>`
+- Documentation: JSDoc or docstring
+```
+
+## Tool Permissions
+
+The LSP skill uses read-only analysis tools:
+- `read`: View file contents for context
+- `grep_search`: Fallback pattern search
+- `file_search`: Find files by name
+- `lsp_query`: Execute LSP commands (when available)
+
+**Denied**: `edit`, `bash`, `write` (no modifications)
+
+## Guidelines
+
+- Prefer LSP queries over regex when available
+- Cache LSP results for repeated queries
+- Report when falling back to non-LSP methods
+- Provide rich context with results (not just locations)
+- Handle LSP unavailability gracefully
+- Coordinate with explore skill for comprehensive analysis
+- Return actionable, structured findings
+
+<!-- CUSTOM IMPLEMENTATION START -->
+<!-- User customizations preserved here -->
+<!-- CUSTOM IMPLEMENTATION END -->

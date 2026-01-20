@@ -1,0 +1,208 @@
+---
+name: {{name}}
+contextType: {{contextType}}
+enabled: {{enabled}}
+description: {{description}}
+---
+
+# Doc Sync Skill
+
+Documentation synchronization capability for keeping docs aligned with code changes.
+
+## Purpose
+
+This skill provides the ability to:
+- Detect documentation that is out of sync with code
+- Update documentation to reflect code changes
+- Generate documentation from code when missing
+- Validate documentation accuracy against source
+- Maintain documentation consistency across the project
+
+## Context Type
+
+**{{contextType}}**: Executes in a forked context, analyzing code-documentation relationships and proposing synchronization updates.
+
+## Synchronization Strategies
+
+### Detection Phase
+
+Identify documentation drift:
+- **Signature Changes**: Function/method signatures that don't match docs
+- **API Changes**: Endpoint documentation that differs from implementation
+- **Parameter Changes**: Documented params that don't match code
+- **Return Type Changes**: Documented returns that don't match actual
+- **Missing Documentation**: Code with no corresponding docs
+
+### Update Phase
+
+Synchronize documentation:
+- **JSDoc/TSDoc**: Update inline documentation comments
+- **README Updates**: Reflect changes in README files
+- **API Documentation**: Update OpenAPI/Swagger specs
+- **Type Documentation**: Sync type definitions with descriptions
+- **Example Updates**: Update code examples to current API
+
+## Synchronization Targets
+
+### Code-Level Documentation
+
+```markdown
+## JSDoc Sync Analysis
+
+### File: src/utils/format.ts
+
+#### Function: formatDate
+- Current signature: `formatDate(date: Date, format?: string): string`
+- Documented signature: `formatDate(date: Date): string`
+- Status: OUT OF SYNC
+- Action: Add `format` parameter documentation
+
+#### Function: parseDate
+- Status: IN SYNC
+
+#### Function: formatCurrency
+- Status: MISSING DOCS
+- Action: Generate JSDoc from signature
+```
+
+### Project Documentation
+
+```markdown
+## README Sync Analysis
+
+### Sections Analyzed
+1. Installation: IN SYNC
+2. Quick Start: OUT OF SYNC (API changed)
+3. Configuration: IN SYNC
+4. API Reference: OUT OF SYNC (new endpoints)
+5. Examples: OUT OF SYNC (deprecated method used)
+
+### Required Updates
+- Quick Start: Update import statement
+- API Reference: Add /v2/users endpoint docs
+- Examples: Replace `oldMethod()` with `newMethod()`
+```
+
+### API Documentation
+
+```markdown
+## OpenAPI Spec Sync Analysis
+
+### File: docs/openapi.yaml
+
+#### Endpoint: POST /api/users
+- Implementation: src/api/routes/users.ts:42
+- Spec Status: OUT OF SYNC
+- Differences:
+  - Missing request body field: `preferences`
+  - Response schema missing: `createdAt` field
+
+#### Endpoint: GET /api/users/:id
+- Status: IN SYNC
+
+#### Endpoint: DELETE /api/users/:id
+- Status: NOT DOCUMENTED
+- Action: Add endpoint documentation
+```
+
+## Output Format
+
+Documentation sync results should be actionable:
+
+```markdown
+## Documentation Sync Report
+
+### Summary
+- Files analyzed: 45
+- Documentation files: 12
+- Items in sync: 38
+- Items out of sync: 7
+- Missing documentation: 3
+
+### Out of Sync Items
+
+#### 1. src/api/auth.ts - `authenticate` function
+**Issue**: Parameter documentation outdated
+**Current Code**:
+```typescript
+authenticate(credentials: Credentials, options?: AuthOptions): Promise<Token>
+```
+**Current Docs**:
+```typescript
+@param credentials - User credentials
+```
+**Missing**: `options` parameter documentation
+**Suggested Fix**:
+```typescript
+@param credentials - User credentials
+@param options - Optional authentication options
+```
+
+#### 2. README.md - Quick Start section
+**Issue**: Import path changed
+**Current Code**: `import { init } from '@package/core'`
+**Current Docs**: `import { init } from '@package'`
+**Suggested Fix**: Update import in README
+
+### Missing Documentation
+
+#### 1. src/utils/crypto.ts
+- Functions: 3 undocumented
+- Suggested: Generate JSDoc templates
+
+### Sync Actions Required
+1. [ ] Update authenticate function JSDoc
+2. [ ] Update README import path
+3. [ ] Add docs for crypto utilities
+4. [ ] Add OpenAPI spec for DELETE endpoint
+
+### Auto-Sync Available
+- 4 items can be auto-synced
+- 3 items require manual review
+```
+
+## Validation Rules
+
+### Accuracy Checks
+
+- Function signatures match documentation
+- Parameter names and types aligned
+- Return types documented correctly
+- Examples compile and run
+- Links and references valid
+
+### Completeness Checks
+
+- All public API documented
+- All parameters described
+- Return values documented
+- Error cases covered
+- Examples provided for complex functions
+
+## Tool Permissions
+
+The doc-sync skill uses documentation-focused tools:
+- `read`: Analyze source code and documentation
+- `edit`: Update documentation files
+- `grep_search`: Find documentation patterns
+- `file_search`: Locate documentation files
+- `bash`: Run documentation generation tools (optional)
+
+**Scope**: Documentation files and inline comments only
+
+## Guidelines
+
+- Prefer updating existing docs over creating new files
+- Maintain consistent documentation style
+- Keep examples simple and focused
+- Validate links and references
+- Coordinate with Librarian agent for major doc updates
+- Preserve user customizations in docs (marked sections)
+- Generate documentation from code when starting fresh
+- Use language-appropriate documentation formats
+- Report confidence level for auto-sync suggestions
+- Require review for semantic documentation changes
+
+<!-- CUSTOM IMPLEMENTATION START -->
+<!-- User customizations preserved here -->
+<!-- CUSTOM IMPLEMENTATION END -->

@@ -119,6 +119,43 @@ The following 5 MVP agents are included:
 | `build` | Code implementation and modification | `claude-sonnet-4` |
 | `plan` | Project planning and task breakdown | `claude-sonnet-4` |
 
+## Post-MVP Agents (Phase 1)
+
+The following 3 agents are added in Post-MVP Phase 1:
+
+| Agent | Purpose | Default Model | Display Name |
+|-------|---------|---------------|--------------|
+| `frontend-ui-ux` | UI/UX design and frontend implementation | `claude-sonnet-4` | Frontend Architect |
+| `document-writer` | Technical writing and documentation | `claude-sonnet-4` | Documentation Writer |
+| `general` | General-purpose tasks and research fallback | `claude-haiku-4-5` | Research Agent |
+
+### Frontend-UI-UX Agent
+
+The Frontend Architect specializes in:
+- UI component design and implementation
+- CSS/styling architecture
+- Accessibility compliance (WCAG)
+- Responsive design
+- Frontend performance optimization
+- Design system implementation
+
+### Document-Writer Agent
+
+The Documentation Writer focuses on:
+- Technical documentation creation
+- API reference documentation
+- User guides and tutorials
+- Architecture decision records (ADRs)
+- Release notes and changelogs
+
+### General Agent
+
+The Research Agent serves as a versatile fallback for:
+- General research and information gathering
+- Cross-domain problem analysis
+- Technology evaluation
+- Task triage when domain is unclear
+
 ## Example Template
 
 ```markdown

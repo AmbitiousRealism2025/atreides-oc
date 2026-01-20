@@ -7,6 +7,7 @@ import type {
   CompactionHookResult,
   SystemTransformHookPayload,
   CompactionHookPayload,
+  ChatParamsHookPayload,
 } from "./types.js";
 import { createLogger } from "../lib/logger.js";
 
@@ -19,6 +20,7 @@ const SAFE_DEFAULTS: HookSafeDefaults = {
   "tool.execute.after": undefined,
   "experimental.chat.system.transform": { system: "" },
   "experimental.session.compacting": { summary: "" },
+  "chat.params": { params: {} },
 };
 
 function getSafeDefault<T extends HookName>(
@@ -35,6 +37,11 @@ function getSafeDefault<T extends HookName>(
   if (hookName === "experimental.session.compacting" && payload) {
     const p = payload as CompactionHookPayload;
     return { summary: p.summary } as HookSafeDefaults[T];
+  }
+
+  if (hookName === "chat.params" && payload) {
+    const p = payload as ChatParamsHookPayload;
+    return { params: p.params } as HookSafeDefaults[T];
   }
 
   return baseDefault;

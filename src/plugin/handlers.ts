@@ -9,6 +9,8 @@ import type {
   SystemTransformHookResult,
   CompactionHookPayload,
   CompactionHookResult,
+  ChatParamsHookPayload,
+  ChatParamsHookResult,
   PluginContext,
 } from "./types.js";
 import type { Config } from "../lib/config.js";
@@ -27,8 +29,125 @@ import { IdentityManager } from "./managers/identity-manager.js";
 import { SystemPromptInjector } from "./managers/system-prompt-injector.js";
 import { compactionHandler } from "./managers/compaction-handler.js";
 import { todoEnforcer } from "./managers/todo-enforcer.js";
+import { getSessionLogger, type SessionLogger } from "../lib/session-logger.js";
+import { getStatePersistence, type StatePersistence } from "../lib/state-persistence.js";
+import {
+  NotificationManager,
+  getNotificationManager,
+} from "./managers/notification-manager.js";
+import { getThinkModeManager, type ThinkModeManager } from "./managers/think-mode-manager.js";
 
 const logger = createLogger("atreides:handlers");
+
+// Module-level instances for session logging, state persistence, and notifications
+let sessionLogger: SessionLogger | null = null;
+let statePersistence: StatePersistence | null = null;
+let notificationManager: NotificationManager | null = null;
+let thinkModeManager: ThinkModeManager | null = null;
+
+/**
+ * Initialize the logging, state persistence, and notification infrastructure.
+ * Should be called during plugin initialization.
+ *
+ * @param config - Plugin configuration
+ * @param context - Plugin context (optional, provides OpenCode client for notifications)
+ */
+export async function initializeLoggingInfrastructure(
+  config: Config,
+  context?: PluginContext
+): Promise<void> {
+  const loggingConfig = config.logging;
+
+  // Initialize session logger
+  if (loggingConfig.enableSessionLogging) {
+    sessionLogger = getSessionLogger({
+      enabled: true,
+      maxLogFiles: loggingConfig.maxLogFiles,
+      maxFileSizeBytes: loggingConfig.maxLogFileSizeBytes,
+      enablePiiFiltering: loggingConfig.enablePiiFiltering,
+      customPiiPatterns: loggingConfig.customPiiPatterns,
+      logLevels: loggingConfig.logLevels,
+    });
+    await sessionLogger.initialize();
+    logger.info("Session logging initialized");
+  }
+
+  // Initialize state persistence
+  if (loggingConfig.enableStatePersistence) {
+    statePersistence = getStatePersistence({
+      enabled: true,
+      maxStateFiles: loggingConfig.maxStateFiles,
+      autoSaveIntervalMs: loggingConfig.autoSaveIntervalMs,
+      enablePiiFiltering: loggingConfig.enablePiiFiltering,
+    });
+    await statePersistence.initialize();
+    logger.info("State persistence initialized");
+
+    // Cleanup old logs and states on startup
+    if (sessionLogger) {
+      const deletedLogs = await sessionLogger.cleanupOldLogs();
+      if (deletedLogs > 0) {
+        logger.debug("Cleaned up old log files", { count: deletedLogs });
+      }
+    }
+    const deletedStates = await statePersistence.cleanupOldStates();
+    if (deletedStates > 0) {
+      logger.debug("Cleaned up old state files", { count: deletedStates });
+    }
+  }
+
+  // Initialize notification manager
+  if (config.notifications.enabled) {
+    notificationManager = getNotificationManager(config.notifications);
+
+    // Set the OpenCode client if available
+    if (context?.client) {
+      notificationManager.setClient(context.client);
+    }
+
+    logger.info("Notification manager initialized", {
+      enabled: config.notifications.enabled,
+      enabledEvents: config.notifications.enabledEvents,
+      minSeverity: config.notifications.minSeverity,
+    });
+  }
+
+  // Initialize think mode manager
+  if (config.thinkMode.enabled) {
+    thinkModeManager = getThinkModeManager(config.thinkMode);
+    logger.info("Think mode manager initialized", {
+      defaultModel: config.thinkMode.defaultModel,
+      thinkModel: config.thinkMode.thinkModel,
+      fastModel: config.thinkMode.fastModel,
+      autoSwitch: config.thinkMode.autoSwitch,
+    });
+  }
+}
+
+/**
+ * Get the session logger instance.
+ */
+export function getSessionLoggerInstance(): SessionLogger | null {
+  return sessionLogger;
+}
+
+/**
+ * Get the state persistence instance.
+ */
+export function getStatePersistenceInstance(): StatePersistence | null {
+  return statePersistence;
+}
+
+/**
+ * Get the notification manager instance.
+ */
+export function getNotificationManagerInstance(): NotificationManager | null {
+  return notificationManager;
+}
+
+export function getThinkModeManagerInstance(): ThinkModeManager | null {
+  return thinkModeManager;
+}
 
 /**
  * Create an event handler for session lifecycle events.
@@ -78,11 +197,73 @@ export function createEventHandler(
         // Step 2: Store the initialized state in the SessionManager's internal Map
         // The Map provides O(1) access for subsequent state operations
         SessionManager.setState(sessionId, state);
+
+        // Log session creation to file
+        if (sessionLogger) {
+          await sessionLogger.logSessionCreated(sessionId, {
+            personaName: config.identity.personaName,
+            phaseTrackingEnabled: config.workflow.enablePhaseTracking,
+            todoEnforcementEnabled: config.workflow.strictTodoEnforcement,
+          });
+        }
+
+        // Start auto-save for state persistence
+        if (statePersistence && config.logging.autoSaveIntervalMs > 0) {
+          statePersistence.startAutoSave(sessionId, () =>
+            SessionManager.getStateOrUndefined(sessionId)
+          );
+        }
+
+        // Send session started notification
+        if (notificationManager) {
+          await notificationManager.notifySessionStarted(
+            sessionId,
+            config.identity.personaName
+          );
+        }
+
         logger.info("Session initialized", { sessionId });
         break;
       }
 
       case "session.deleted": {
+        const deletedState = SessionManager.getStateOrUndefined(sessionId);
+
+        // Save final state before deletion
+        if (statePersistence && deletedState) {
+          await statePersistence.saveState(deletedState);
+          // Stop auto-save timer
+          statePersistence.stopAutoSave(sessionId);
+        }
+
+        // Log session deletion to file
+        if (sessionLogger) {
+          await sessionLogger.logSessionDeleted(sessionId, {
+            phase: deletedState?.phase,
+            errorCount: deletedState?.errorCount,
+            todoCount: deletedState?.todoCount,
+            todosCompleted: deletedState?.todosCompleted,
+            toolsExecuted: deletedState?.toolHistory.length,
+          });
+        }
+
+        // Send workflow completion notification (if workflow was completed)
+        if (notificationManager && deletedState) {
+          const workflowComplete =
+            deletedState.phase === "verification" ||
+            deletedState.workflow.completed;
+
+          if (workflowComplete) {
+            await notificationManager.notifyWorkflowComplete(sessionId, {
+              todosCompleted: deletedState.todosCompleted,
+              phasesVisited: deletedState.workflow.phaseHistory.length,
+            });
+          }
+
+          // Clear throttle tracking for this session
+          notificationManager.clearSessionThrottles(sessionId);
+        }
+
         SessionManager.deleteSession(sessionId);
         compactionHandler.clearSessionTodos(sessionId);
         todoEnforcer.clearSessionTodos(sessionId);
@@ -92,6 +273,11 @@ export function createEventHandler(
 
       case "session.idle": {
         SessionManager.updateActivity(sessionId);
+
+        // Log activity event
+        if (sessionLogger) {
+          await sessionLogger.debug(sessionId, "session.activity", { event: "idle" });
+        }
         break;
       }
 
@@ -120,6 +306,25 @@ export function createStopHandler(
           sessionId,
           pendingCount: todoResult.pendingCount,
         });
+
+        // Log the blocked stop event
+        if (sessionLogger) {
+          await sessionLogger.warn(sessionId, "todo.pending", {
+            pendingCount: todoResult.pendingCount,
+            pendingTodos: todoResult.pendingTodos,
+            reason: todoResult.reason,
+          });
+        }
+
+        // Send pending todos notification
+        if (notificationManager) {
+          await notificationManager.notifyPendingTodos(
+            sessionId,
+            todoResult.pendingCount,
+            todoResult.pendingTodos
+          );
+        }
+
         return createStopHookResult(false, todoResult.reason);
       }
     }
@@ -135,6 +340,15 @@ export function createStopHandler(
           currentPhase: state.phase,
           phaseCount: phaseHistory.length,
         });
+      }
+    }
+
+    // Save state on session stop
+    if (statePersistence) {
+      await statePersistence.saveState(state);
+
+      if (sessionLogger) {
+        await sessionLogger.logStateSaved(sessionId);
       }
     }
 
@@ -185,6 +399,11 @@ export function createToolBeforeHandler(
 
     logger.debug(`Tool before: ${tool}`, { sessionId });
 
+    // Log tool before event
+    if (sessionLogger) {
+      await sessionLogger.logToolBefore(sessionId, tool, input);
+    }
+
     // Security validation via ToolInterceptor (if enabled)
     if (config.security.enableObfuscationDetection) {
       const validationResult = await toolInterceptor.beforeExecute(tool, input, sessionId);
@@ -204,6 +423,25 @@ export function createToolBeforeHandler(
           reason: validationResult.reason,
           pattern: validationResult.matchedPattern,
         });
+
+        // Log security block event
+        if (sessionLogger) {
+          await sessionLogger.logSecurityBlocked(
+            sessionId,
+            tool,
+            validationResult.reason ?? "Unknown reason",
+            validationResult.matchedPattern
+          );
+        }
+
+        // Send security blocked notification
+        if (notificationManager) {
+          await notificationManager.notifySecurityBlocked(
+            sessionId,
+            tool,
+            validationResult.reason ?? "Unknown reason"
+          );
+        }
 
         return createToolBeforeResult(
           false,
@@ -225,6 +463,24 @@ export function createToolBeforeHandler(
           reason: validationResult.reason,
           pattern: validationResult.matchedPattern,
         });
+
+        // Log security warning event
+        if (sessionLogger) {
+          await sessionLogger.warn(sessionId, "security.warned", {
+            tool,
+            reason: validationResult.reason,
+            pattern: validationResult.matchedPattern,
+          });
+        }
+
+        // Send security warning notification
+        if (notificationManager) {
+          await notificationManager.notifySecurityWarning(
+            sessionId,
+            tool,
+            validationResult.reason ?? "Pattern matched"
+          );
+        }
 
         // For "ask" action, we return allow: true but include a warning message
         // The warning message alerts the AI to proceed with caution
@@ -250,12 +506,24 @@ export function createToolAfterHandler(
     const { tool, sessionId, output, input } = payload;
 
     // Log tool execution via ToolInterceptor (handles duration tracking and history)
-    await toolInterceptor.afterExecute(tool, output, sessionId);
+    const toolResult = await toolInterceptor.afterExecute(tool, output, sessionId);
 
     const state = SessionManager.getStateOrUndefined(sessionId);
     if (state) {
       // Use ErrorRecovery module for comprehensive error handling
       const recoveryResult = await ErrorRecovery.checkForErrors(tool, output, sessionId);
+
+      // Log tool after event
+      if (sessionLogger) {
+        const success = !recoveryResult.errorDetected;
+        await sessionLogger.logToolAfter(
+          sessionId,
+          tool,
+          success,
+          toolResult?.durationMs,
+          recoveryResult.errorDetected ? recoveryResult.suggestion?.message : undefined
+        );
+      }
 
       // Log recovery actions based on result
       if (recoveryResult.action === "suggested" && recoveryResult.recoveryMessage) {
@@ -264,12 +532,50 @@ export function createToolAfterHandler(
           sessionId,
           strikeCount: recoveryResult.strikeCount,
         });
+
+        // Log error strike event
+        if (sessionLogger) {
+          await sessionLogger.logErrorStrike(
+            sessionId,
+            recoveryResult.strikeCount,
+            tool,
+            recoveryResult.suggestion?.message ?? "Unknown error"
+          );
+        }
+
+        // Send error strike notification
+        if (notificationManager) {
+          await notificationManager.notifyErrorStrike(
+            sessionId,
+            recoveryResult.strikeCount,
+            tool,
+            recoveryResult.suggestion?.message ?? "Unknown error"
+          );
+        }
       } else if (recoveryResult.action === "escalated") {
         logger.warn("Session escalated to Stilgar due to repeated errors", {
           tool,
           sessionId,
           strikeCount: recoveryResult.strikeCount,
         });
+
+        // Log escalation event
+        if (sessionLogger) {
+          await sessionLogger.logErrorEscalation(
+            sessionId,
+            recoveryResult.strikeCount,
+            tool
+          );
+        }
+
+        // Send escalation notification
+        if (notificationManager) {
+          await notificationManager.notifyErrorEscalation(
+            sessionId,
+            recoveryResult.strikeCount,
+            tool
+          );
+        }
 
         // Trigger auto-escalation if configured
         if (config.workflow.autoEscalateOnError) {
@@ -278,11 +584,30 @@ export function createToolAfterHandler(
             timestamp: Date.now(),
           });
         }
+      } else if (
+        recoveryResult.action === "reset" &&
+        state.errorCount === 0 &&
+        notificationManager
+      ) {
+        // Send error recovery notification when errors are cleared
+        await notificationManager.notifyErrorRecovery(sessionId);
       }
 
       // Update workflow phase based on tool usage (if phase tracking enabled)
       if (config.workflow.enablePhaseTracking) {
+        const previousPhase = state.phase;
         await workflowEngine.updatePhase(tool, sessionId, input);
+
+        // Log phase transition if phase changed
+        if (state.phase !== previousPhase && sessionLogger) {
+          await sessionLogger.logPhaseTransition(
+            sessionId,
+            previousPhase,
+            state.phase,
+            tool,
+            `Triggered by ${tool} execution`
+          );
+        }
       }
 
       if (tool === "todowrite") {
@@ -303,6 +628,15 @@ export function createToolAfterHandler(
 
           // Store pending todos for compaction preservation
           compactionHandler.storePendingTodos(sessionId, todoData.todos);
+
+          // Log todo events
+          if (sessionLogger) {
+            await sessionLogger.info(sessionId, "todo.created", {
+              total,
+              completed,
+              pending: total - completed,
+            });
+          }
         }
       }
     }
@@ -467,6 +801,34 @@ export function createCompactionHandler(
     const personaName = config.identity.personaName;
     const stateBlock = await compactionHandler.preserveState(sessionId, personaName);
 
+    // Log compaction event
+    if (sessionLogger) {
+      await sessionLogger.info(sessionId, "compaction.completed", {
+        phase: state.phase,
+        todoCount: state.todoCount,
+        errorCount: state.errorCount,
+      });
+    }
+
+    // Send compaction notification
+    if (notificationManager) {
+      await notificationManager.notifyCompactionCompleted(sessionId);
+    }
+
     return createCompactionResult(summary + stateBlock);
+  };
+}
+
+export function createChatParamsHandler(
+  config: Config
+): ((payload: ChatParamsHookPayload) => ChatParamsHookResult) | undefined {
+  if (!config.thinkMode.enabled) {
+    return undefined;
+  }
+
+  const manager = getThinkModeManager(config.thinkMode);
+
+  return (payload: ChatParamsHookPayload): ChatParamsHookResult => {
+    return manager.createChatParamsHandler()(payload);
   };
 }

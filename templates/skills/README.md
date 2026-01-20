@@ -1,6 +1,6 @@
 # Skill Templates
 
-This directory contains templates for the MVP skills used by Atreides OpenCode.
+This directory contains templates for the skills used by Atreides OpenCode.
 
 ## Overview
 
@@ -9,7 +9,7 @@ Skills are reusable capabilities that agents can invoke. Each skill has a specif
 - **main**: Executes in the main conversation context with full session state
 - **fork**: Executes in a forked context for parallel/isolated operations
 
-## MVP Skills
+## MVP Skills (4 total)
 
 | Skill | Context Type | Purpose |
 |-------|--------------|---------|
@@ -17,6 +17,24 @@ Skills are reusable capabilities that agents can invoke. Each skill has a specif
 | `orchestrate` | main | Workflow orchestration and agent delegation |
 | `explore` | fork | Codebase exploration and context gathering |
 | `validate` | fork | Code validation and quality checks |
+
+## Advanced Skills - Post-MVP Phase 2, Set 1 (4 total)
+
+| Skill | Context Type | Purpose |
+|-------|--------------|---------|
+| `lsp` | fork | Language Server Protocol integration for intelligent code analysis |
+| `refactor` | fork | Code refactoring and restructuring for safe transformations |
+| `checkpoint` | main | State checkpointing and backup for workflow recovery |
+| `tdd` | fork | Test-driven development workflow for quality-first implementation |
+
+## Extended Skills - Post-MVP Phase 2, Set 2 (4 total)
+
+| Skill | Context Type | Purpose |
+|-------|--------------|---------|
+| `parallel-explore` | fork | Parallel codebase exploration for faster context gathering |
+| `incremental-refactor` | fork | Incremental refactoring with validation between steps |
+| `doc-sync` | fork | Documentation synchronization with code changes |
+| `quality-gate` | fork | Quality gate enforcement for code standards |
 
 ## Template Structure
 
@@ -55,7 +73,23 @@ Generated skills are placed in:
     │   └── SKILL.md
     ├── explore/
     │   └── SKILL.md
-    └── validate/
+    ├── validate/
+    │   └── SKILL.md
+    ├── lsp/                    (Advanced)
+    │   └── SKILL.md
+    ├── refactor/               (Advanced)
+    │   └── SKILL.md
+    ├── checkpoint/             (Advanced)
+    │   └── SKILL.md
+    ├── tdd/                    (Advanced)
+    │   └── SKILL.md
+    ├── parallel-explore/       (Extended)
+    │   └── SKILL.md
+    ├── incremental-refactor/   (Extended)
+    │   └── SKILL.md
+    ├── doc-sync/               (Extended)
+    │   └── SKILL.md
+    └── quality-gate/           (Extended)
         └── SKILL.md
 ```
 
@@ -80,4 +114,39 @@ To add a new skill:
 3. Follow the frontmatter schema
 4. Include all required sections
 5. Add customization zone for user modifications
-6. Update `MVP_SKILL_NAMES` in `skill-types.ts` if it's an MVP skill
+6. Update `skill-types.ts`:
+   - Add to `MVP_SKILL_NAMES` for MVP skills
+   - Add to `ADVANCED_SKILL_NAMES` for advanced skills (Phase 2, Set 1)
+   - Add to `EXTENDED_SKILL_NAMES` for extended skills (Phase 2, Set 2)
+   - Add corresponding config to `MVP_SKILL_CONFIGS`, `ADVANCED_SKILL_CONFIGS`, or `EXTENDED_SKILL_CONFIGS`
+
+## Programmatic Access
+
+```typescript
+import {
+  // MVP Skills
+  MVP_SKILL_NAMES,
+  MVP_SKILL_CONFIGS,
+  isMVPSkill,
+  getDefaultSkillConfig,
+  getAllMVPSkillConfigs,
+
+  // Advanced Skills
+  ADVANCED_SKILL_NAMES,
+  ADVANCED_SKILL_CONFIGS,
+  isAdvancedSkill,
+  getDefaultAdvancedSkillConfig,
+  getAllAdvancedSkillConfigs,
+
+  // Extended Skills
+  EXTENDED_SKILL_NAMES,
+  EXTENDED_SKILL_CONFIGS,
+  isExtendedSkill,
+  getDefaultExtendedSkillConfig,
+  getAllExtendedSkillConfigs,
+
+  // All Skills (MVP + Advanced + Extended = 12 total)
+  ALL_SKILL_NAMES,
+  getAllSkillConfigs,
+} from '@atreides/opencode';
+```

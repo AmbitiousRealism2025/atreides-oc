@@ -42,6 +42,18 @@ export interface BeforeExecuteResult {
 }
 
 /**
+ * Result of post-execution logging.
+ */
+export interface AfterExecuteResult {
+  /** Whether the tool execution was successful */
+  success: boolean;
+  /** Execution duration in milliseconds */
+  durationMs?: number;
+  /** Error message if failed */
+  error?: string;
+}
+
+/**
  * Tracking data for an in-flight tool execution.
  * Used to compute duration between beforeExecute and afterExecute.
  */
@@ -157,17 +169,18 @@ export class ToolInterceptor {
    * @param tool - The tool name that was executed
    * @param output - The tool output/result
    * @param sessionId - The session identifier
+   * @returns Execution result with success status and duration
    */
   async afterExecute(
     tool: string,
     output: unknown,
     sessionId: string
-  ): Promise<void> {
+  ): Promise<AfterExecuteResult | undefined> {
     try {
       const state = SessionManager.getStateOrUndefined(sessionId);
       if (!state) {
         logger.warn("Session not found for afterExecute", { sessionId, tool });
-        return;
+        return undefined;
       }
 
       // Calculate duration from tracked start time
@@ -181,16 +194,16 @@ export class ToolInterceptor {
       }
 
       // Determine success/failure from output
-      const { success, error } = this.extractResultStatus(output);
+      const { success, error: errorMsg } = this.extractResultStatus(output);
 
       // Create execution record
       const record: ToolExecutionRecord = {
         tool,
         timestamp: new Date(),
         success,
-        durationMs,
-        error,
       };
+      if (durationMs !== undefined) record.durationMs = durationMs;
+      if (errorMsg !== undefined) record.error = errorMsg;
 
       // Add to history
       state.toolHistory.push(record);
@@ -210,6 +223,12 @@ export class ToolInterceptor {
         durationMs: durationMs?.toFixed(2),
         historySize: state.toolHistory.length,
       });
+
+      // Return execution result
+      const result: AfterExecuteResult = { success };
+      if (durationMs !== undefined) result.durationMs = durationMs;
+      if (errorMsg !== undefined) result.error = errorMsg;
+      return result;
     } catch (error) {
       logger.error("Tool logging error", {
         tool,
@@ -217,6 +236,7 @@ export class ToolInterceptor {
         error: error instanceof Error ? error.message : String(error),
       });
       // Never throw from afterExecute
+      return undefined;
     }
   }
 
@@ -304,11 +324,12 @@ export class ToolInterceptor {
   private toBeforeExecuteResult(
     result: CommandValidationResult | FileValidationResult
   ): BeforeExecuteResult {
-    return {
+    const beforeResult: BeforeExecuteResult = {
       action: result.action,
-      reason: result.reason,
-      matchedPattern: result.matchedPattern,
     };
+    if (result.reason !== undefined) beforeResult.reason = result.reason;
+    if (result.matchedPattern !== undefined) beforeResult.matchedPattern = result.matchedPattern;
+    return beforeResult;
   }
 
   /**
@@ -324,30 +345,30 @@ export class ToolInterceptor {
 
       // Check for explicit error field
       if (obj["error"] !== undefined) {
-        const error = obj["error"];
-        if (typeof error === "string" && error.length > 0) {
-          return { success: false, error };
+        const errorVal = obj["error"];
+        if (typeof errorVal === "string" && errorVal.length > 0) {
+          return { success: false, error: errorVal };
         }
-        if (error === true) {
+        if (errorVal === true) {
           return { success: false, error: "Unknown error" };
         }
       }
 
       // Check for explicit success field
       if (typeof obj["success"] === "boolean") {
-        return {
-          success: obj["success"],
-          error: obj["success"] ? undefined : String(obj["message"] ?? "Operation failed"),
-        };
+        if (obj["success"]) {
+          return { success: true };
+        }
+        return { success: false, error: String(obj["message"] ?? "Operation failed") };
       }
 
       // Check for exitCode (bash tool)
       if (typeof obj["exitCode"] === "number") {
         const exitCode = obj["exitCode"];
-        return {
-          success: exitCode === 0,
-          error: exitCode !== 0 ? `Exit code: ${exitCode}` : undefined,
-        };
+        if (exitCode === 0) {
+          return { success: true };
+        }
+        return { success: false, error: `Exit code: ${exitCode}` };
       }
     }
 

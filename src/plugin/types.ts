@@ -346,6 +346,8 @@ export interface PluginHooks {
   "experimental.chat.system.transform": SystemTransformHookHandler;
   /** Session compaction handler */
   "experimental.session.compacting": CompactionHookHandler;
+  /** Chat params modification handler (for model switching) */
+  "chat.params"?: ChatParamsHookHandler;
 }
 
 // =============================================================================
@@ -484,6 +486,40 @@ export interface SecurityValidationStats {
   /** Average validation time in ms */
   avgValidationTimeMs: number;
 }
+
+// =============================================================================
+// Think Mode Types
+// =============================================================================
+
+export type ThinkModeState = "default" | "think" | "fast";
+
+export interface ThinkModePerformanceMetrics {
+  sessionId: string;
+  model: string;
+  responseTime: number;
+  tokenCount?: number;
+  timestamp: number;
+}
+
+export interface ChatParamsHookPayload {
+  sessionId: string;
+  params: ChatParams;
+}
+
+export interface ChatParamsHookResult {
+  params: ChatParams;
+}
+
+export interface ChatParams {
+  model?: string;
+  maxTokens?: number;
+  temperature?: number;
+  system?: string;
+}
+
+export type ChatParamsHookHandler = (
+  payload: ChatParamsHookPayload
+) => ChatParamsHookResult | Promise<ChatParamsHookResult>;
 
 // =============================================================================
 // Todo Enforcer Types
@@ -651,6 +687,83 @@ export interface ExtractedToolError {
 }
 
 // =============================================================================
+// Session Notification Types
+// =============================================================================
+
+/**
+ * Notification severity levels.
+ * Determines the visual urgency and delivery priority.
+ */
+export type NotificationSeverity = "info" | "warning" | "error" | "success";
+
+/**
+ * Notification event types that can trigger user notifications.
+ * These map to orchestration events that users should be aware of.
+ */
+export type NotificationEventType =
+  | "session.started"       // Session initialized
+  | "session.completed"     // Workflow completed successfully
+  | "phase.transition"      // Workflow phase changed
+  | "error.strike"          // Error detected (strike 1-2)
+  | "error.escalation"      // 3-strike escalation to Stilgar
+  | "error.recovery"        // Error resolved/recovered
+  | "security.blocked"      // Security validation blocked a tool
+  | "security.warning"      // Security warning issued
+  | "todo.pending"          // Pending todos blocking stop
+  | "compaction.completed"  // Context compaction finished
+  | "custom";               // Custom notification
+
+/**
+ * Session notification payload structure.
+ * Sent via OpenCodeClient.notify() when enabled.
+ */
+export interface SessionNotification {
+  /** Unique notification ID */
+  id: string;
+  /** Notification event type */
+  type: NotificationEventType;
+  /** Severity level */
+  severity: NotificationSeverity;
+  /** Session identifier */
+  sessionId: string;
+  /** Notification title (short summary) */
+  title: string;
+  /** Notification message (detailed description) */
+  message: string;
+  /** ISO 8601 timestamp */
+  timestamp: string;
+  /** Additional context data */
+  data?: Record<string, unknown>;
+}
+
+/**
+ * User preferences for notification delivery.
+ * Controls which notifications are shown and how.
+ */
+export interface NotificationPreferences {
+  /** Enable notifications globally */
+  enabled: boolean;
+  /** Event types to notify on (empty = all) */
+  enabledEvents: NotificationEventType[];
+  /** Minimum severity to notify (events below this are suppressed) */
+  minSeverity: NotificationSeverity;
+  /** Throttle interval in ms (prevent spam) */
+  throttleMs: number;
+}
+
+/**
+ * Result from notification delivery attempt.
+ */
+export interface NotificationResult {
+  /** Whether notification was delivered */
+  delivered: boolean;
+  /** Reason if not delivered */
+  reason?: "disabled" | "throttled" | "filtered" | "error";
+  /** Notification that was sent (if delivered) */
+  notification?: SessionNotification;
+}
+
+// =============================================================================
 // Utility Types
 // =============================================================================
 
@@ -686,4 +799,5 @@ export interface HookSafeDefaults {
   "tool.execute.after": void;
   "experimental.chat.system.transform": SystemTransformHookResult;
   "experimental.session.compacting": CompactionHookResult;
+  "chat.params": ChatParamsHookResult;
 }
