@@ -1,0 +1,87 @@
+---
+name: {{name}}
+contextType: {{contextType}}
+enabled: {{enabled}}
+description: {{description}}
+---
+
+# Explore Skill
+
+Codebase exploration and context gathering capability.
+
+## Purpose
+
+This skill provides the ability to:
+- Rapidly discover and analyze code structures
+- Map dependencies and import relationships
+- Detect patterns and conventions in the codebase
+- Summarize findings for other agents
+- Identify architecture and design patterns
+
+## Context Type
+
+**{{contextType}}**: Executes in a forked context, suitable for parallel exploration operations that don't modify session state.
+
+## Exploration Strategies
+
+### File Discovery
+- Pattern-based file search (glob patterns)
+- File type filtering
+- Directory traversal with depth limits
+
+### Code Analysis
+- Import/dependency mapping
+- Function and class discovery
+- Pattern detection (naming conventions, structure)
+- Architecture documentation discovery
+
+### Context Gathering
+- README and documentation parsing
+- Configuration file analysis
+- Test file patterns
+- Build system detection
+
+## Output Format
+
+Exploration results should be structured for efficient handoff:
+
+```markdown
+## Exploration Summary
+
+### Files Found
+- path/to/file.ts - Description of purpose
+
+### Patterns Detected
+- Pattern name: Description and locations
+
+### Dependencies
+- Module: Used by [list of files]
+
+### Recommendations
+- Suggestions for next steps
+```
+
+## Tool Permissions
+
+The explore skill uses read-only tools:
+- `read`: View file contents
+- `grep_search`: Search for patterns
+- `file_search`: Find files by name
+- `list_dir`: List directory contents
+- `glob`: Pattern-based file matching
+
+**Denied**: `edit`, `bash`, `write` (no modifications)
+
+## Guidelines
+
+- Focus on gathering context, not making changes
+- Summarize findings concisely for efficient handoff
+- Identify patterns and conventions in the codebase
+- Map dependencies before deep analysis
+- Return structured findings that other agents can act on
+- Avoid speculation; report only what is found
+- Use efficient search strategies to minimize token usage
+
+<!-- CUSTOM IMPLEMENTATION START -->
+<!-- User customizations preserved here -->
+<!-- CUSTOM IMPLEMENTATION END -->

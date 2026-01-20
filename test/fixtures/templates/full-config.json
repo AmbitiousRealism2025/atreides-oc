@@ -1,0 +1,35 @@
+{
+  "atreides": {
+    "identity": {
+      "personaName": "SecureAgent",
+      "responsePrefix": true,
+      "delegationAnnouncements": true
+    },
+    "workflow": {
+      "enablePhaseTracking": true,
+      "strictTodoEnforcement": true,
+      "autoEscalateOnError": true
+    },
+    "security": {
+      "enableObfuscationDetection": true,
+      "blockedPatterns": [
+        "rm -rf",
+        "curl.*\\|.*sh",
+        "wget.*\\|.*bash"
+      ],
+      "warningPatterns": [
+        "sudo",
+        "chmod 777"
+      ],
+      "blockedFiles": [
+        ".env",
+        ".env.local",
+        ".env.production",
+        "credentials.json",
+        "secrets.yaml",
+        "*.pem",
+        "*.key"
+      ]
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "atreides": {
+    "identity": {
+      "personaName": "TestAgent",
+      "responsePrefix": true,
+      "delegationAnnouncements": true
+    },
+    "workflow": {
+      "enablePhaseTracking": true,
+      "strictTodoEnforcement": true,
+      "autoEscalateOnError": true
+    },
+    "security": {
+      "enableObfuscationDetection": true,
+      "blockedPatterns": ["rm -rf /"],
+      "warningPatterns": ["sudo"],
+      "blockedFiles": [".env", "credentials.json"]
+    }
+  }
+}

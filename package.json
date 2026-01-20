@@ -1,0 +1,92 @@
+{
+  "name": "atreides-opencode",
+  "version": "0.1.0",
+  "description": "AI orchestration plugin for OpenCode - systematic workflows, intelligent agent delegation, error recovery, and security hardening",
+  "type": "module",
+  "main": "dist/plugin/index.js",
+  "types": "dist/plugin/index.d.ts",
+  "bin": {
+    "atreides-opencode": "dist/cli/index.js",
+    "atreides": "dist/cli/index.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/plugin/index.d.ts",
+      "import": "./dist/plugin/index.js"
+    },
+    "./plugin": {
+      "types": "./dist/plugin/index.d.ts",
+      "import": "./dist/plugin/index.js"
+    },
+    "./cli": {
+      "types": "./dist/cli/index.d.ts",
+      "import": "./dist/cli/index.js"
+    },
+    "./lib": {
+      "types": "./dist/lib/index.d.ts",
+      "import": "./dist/lib/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "templates",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "bun build src/plugin/index.ts src/cli/index.ts --outdir dist --target node --format esm && tsc --emitDeclarationOnly",
+    "build:plugin": "bun build src/plugin/index.ts --outdir dist/plugin --target node --format esm",
+    "build:cli": "bun build src/cli/index.ts --outdir dist/cli --target node --format esm",
+    "dev": "bun --watch src/plugin/index.ts",
+    "test": "bun test",
+    "test:unit": "bun test --test-name-pattern='.*\\.test\\.ts$' --bail",
+    "test:integration": "bun run build && bun test --test-name-pattern='.*\\.integration\\.test\\.ts$'",
+    "test:watch": "bun test --watch",
+    "test:coverage": "bun test --coverage --coverageThreshold='{\"line\":80,\"function\":80,\"branch\":70,\"statement\":80}'",
+    "test:coverage:critical": "bun test --coverage --test-name-pattern='managers' --coverageThreshold='{\"line\":90,\"function\":90,\"branch\":85,\"statement\":90}'",
+    "lint": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "bun run clean && bun run build && bun run lint && bun run test"
+  },
+  "keywords": [
+    "opencode",
+    "opencode-plugin",
+    "ai",
+    "orchestration",
+    "workflow",
+    "agent",
+    "claude",
+    "anthropic",
+    "atreides"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/atreides/atreides-opencode.git"
+  },
+  "bugs": {
+    "url": "https://github.com/atreides/atreides-opencode/issues"
+  },
+  "homepage": "https://github.com/atreides/atreides-opencode#readme",
+  "engines": {
+    "node": ">=20.0.0",
+    "bun": ">=1.0.0"
+  },
+  "peerDependencies": {
+    "@opencode-ai/plugin": ">=0.1.0"
+  },
+  "peerDependenciesMeta": {
+    "@opencode-ai/plugin": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^7.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/bun": "^1.2.0",
+    "typescript": "^5.3.0"
+  }
+}

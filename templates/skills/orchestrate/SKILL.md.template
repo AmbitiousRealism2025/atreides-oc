@@ -1,0 +1,65 @@
+---
+name: {{name}}
+contextType: {{contextType}}
+enabled: {{enabled}}
+description: {{description}}
+---
+
+# Orchestrate Skill
+
+High-level workflow orchestration and agent delegation capability.
+
+## Purpose
+
+This skill provides the ability to:
+- Classify user intent and determine workflow paths
+- Track workflow phases (Intent, Assessment, Exploration, Implementation, Verification)
+- Delegate tasks to specialized agents
+- Monitor progress and coordinate work across agents
+- Handle error escalation and recovery
+
+## Context Type
+
+**{{contextType}}**: Executes in the main conversation context, maintaining full session state and workflow tracking.
+
+## Workflow Phases
+
+The orchestrate skill manages five workflow phases:
+
+1. **Intent**: Classify user request and determine approach
+2. **Assessment**: Evaluate codebase maturity and complexity
+3. **Exploration**: Gather context and understand existing patterns
+4. **Implementation**: Execute the requested changes
+5. **Verification**: Validate results and ensure quality
+
+## Agent Delegation
+
+The orchestrate skill coordinates work across agents:
+
+| Agent | Purpose | Context |
+|-------|---------|---------|
+| Stilgar (Oracle) | Strategic decisions, complex debugging | main |
+| Explore | Codebase exploration, context gathering | fork |
+| Build | Implementation, code changes | main |
+| Plan | Planning, analysis, strategy | main |
+| Librarian | Documentation, OSS research | fork |
+
+## Integration Points
+
+The orchestrate skill integrates with:
+- **WorkflowEngine**: Phase tracking and transitions
+- **SessionManager**: State persistence across operations
+- **IdentityManager**: Delegation announcements and persona management
+- **ErrorRecovery**: Three-strikes protocol and escalation
+
+## Guidelines
+
+- Focus on strategy and coordination, not implementation details
+- Provide clear delegation announcements when handing off to agents
+- Maintain awareness of current workflow phase
+- Escalate to user only when necessary
+- Use systematic task decomposition before delegating
+
+<!-- CUSTOM IMPLEMENTATION START -->
+<!-- User customizations preserved here -->
+<!-- CUSTOM IMPLEMENTATION END -->

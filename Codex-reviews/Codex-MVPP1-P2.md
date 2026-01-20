@@ -1,0 +1,21 @@
+# Codex Review: MVP-P1 and MVP-P2
+
+## Findings (ordered by severity)
+- High: Workflow phase transitions rely on tool usage only, but the heuristic requires an Intent -> Assessment transition after the initial message and before any tool use. With integration limited to `tool.execute.after` and `stop`, there is no hook that observes the initial message, so Assessment can be skipped or never entered. Ref: `Traycer-Planning-Docs/tickets/[MVP-P1]_Implement_WorkflowEngine_&_Phase_Tracking.md:24`, `Traycer-Planning-Docs/tickets/[MVP-P1]_Implement_WorkflowEngine_&_Phase_Tracking.md:59`
+- Medium: Verification and implementation both map to `bash`, yet `detectPhaseTransition` only receives a tool name. Without distinguishing test commands vs general shell usage, phase detection will be ambiguous and likely wrong. Ref: `Traycer-Planning-Docs/tickets/[MVP-P1]_Implement_WorkflowEngine_&_Phase_Tracking.md:66`, `Traycer-Planning-Docs/tickets/[MVP-P1]_Implement_WorkflowEngine_&_Phase_Tracking.md:93`
+- Medium: Phase-specific guidance is required, but the ticket does not define where or how guidance is emitted (hook return value, log, system message, etc.). This makes the acceptance criteria untestable. Ref: `Traycer-Planning-Docs/tickets/[MVP-P1]_Implement_WorkflowEngine_&_Phase_Tracking.md:26`, `Traycer-Planning-Docs/tickets/[MVP-P1]_Implement_WorkflowEngine_&_Phase_Tracking.md:128`
+- Medium: The test example expects a transition from intent to exploration on the first `read`, which conflicts with the heuristic that intent transitions to assessment before tool use. Either the test or the heuristic needs to be adjusted. Ref: `Traycer-Planning-Docs/tickets/[MVP-P1]_Implement_WorkflowEngine_&_Phase_Tracking.md:60`, `Traycer-Planning-Docs/tickets/[MVP-P1]_Implement_WorkflowEngine_&_Phase_Tracking.md:148`
+- Medium: The 22 error patterns are not fully enumerated (only 10 plus a placeholder). This blocks implementing and validating “all 22 patterns detected” and makes unit test coverage undefined. Ref: `Traycer-Planning-Docs/tickets/[MVP-P2]_Implement_ErrorRecovery_&_3-Strike_Protocol.md:38`, `Traycer-Planning-Docs/tickets/[MVP-P2]_Implement_ErrorRecovery_&_3-Strike_Protocol.md:129`
+- Medium: Error detection accepts only a single output string. The ticket does not specify whether this is stdout, stderr, combined output, or includes exit code. That ambiguity can cause missed errors or false resets. Ref: `Traycer-Planning-Docs/tickets/[MVP-P2]_Implement_ErrorRecovery_&_3-Strike_Protocol.md:25`, `Traycer-Planning-Docs/tickets/[MVP-P2]_Implement_ErrorRecovery_&_3-Strike_Protocol.md:74`
+- Medium: Escalation sets `escalated = true`, but there is no reset or downgrade behavior on subsequent successful tool runs. This can permanently lock a session into escalated state. Ref: `Traycer-Planning-Docs/tickets/[MVP-P2]_Implement_ErrorRecovery_&_3-Strike_Protocol.md:101`, `Traycer-Planning-Docs/tickets/[MVP-P2]_Implement_ErrorRecovery_&_3-Strike_Protocol.md:91`
+- Low: The recovery suggestion map uses string keys, while detection is regex-based. There is no mapping from matched regex to suggestion keys (e.g., ENOENT/EACCES). This risks missing suggestions for common errors. Ref: `Traycer-Planning-Docs/tickets/[MVP-P2]_Implement_ErrorRecovery_&_3-Strike_Protocol.md:97`, `Traycer-Planning-Docs/tickets/[MVP-P2]_Implement_ErrorRecovery_&_3-Strike_Protocol.md:114`
+- Low: The `/error:/i` pattern is extremely broad and will match many benign outputs, likely inflating strike counts. Ref: `Traycer-Planning-Docs/tickets/[MVP-P2]_Implement_ErrorRecovery_&_3-Strike_Protocol.md:51`
+
+## Open Questions / Assumptions
+- Should WorkflowEngine also integrate with an event or message hook to capture the initial user message and enter Assessment before tools run?
+- How should the engine distinguish verification `bash` commands from implementation `bash` commands (e.g., pattern match `npm test`, `bun test`, exit code checks)?
+- What is the definitive list of the 22 error patterns from the deep dive, and can they be embedded directly in the ticket for testability?
+- When (if ever) should `errorRecovery.escalated` be reset for a session?
+
+## Change Summary
+- No code changes proposed; this review highlights spec gaps and acceptance criteria ambiguities to resolve before implementation.

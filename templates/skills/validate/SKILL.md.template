@@ -1,0 +1,95 @@
+---
+name: {{name}}
+contextType: {{contextType}}
+enabled: {{enabled}}
+description: {{description}}
+---
+
+# Validate Skill
+
+Code validation and quality checks capability.
+
+## Purpose
+
+This skill provides the ability to:
+- Run automated tests and report results
+- Execute linting and static analysis
+- Validate code against project standards
+- Check build integrity
+- Verify changes meet acceptance criteria
+
+## Context Type
+
+**{{contextType}}**: Executes in a forked context, suitable for parallel validation operations that report back results.
+
+## Validation Types
+
+### Test Validation
+- Unit test execution
+- Integration test execution
+- Test coverage analysis
+- Test result reporting
+
+### Static Analysis
+- Linting (ESLint, Prettier, etc.)
+- Type checking (TypeScript)
+- Code style validation
+- Security scanning
+
+### Build Validation
+- Compilation checks
+- Bundle analysis
+- Dependency validation
+- Build artifact verification
+
+### Quality Checks
+- Code complexity analysis
+- Documentation coverage
+- API compatibility
+- Breaking change detection
+
+## Output Format
+
+Validation results should be structured for clear reporting:
+
+```markdown
+## Validation Results
+
+### Status: PASS | FAIL | WARN
+
+### Test Results
+- Total: X | Passed: Y | Failed: Z
+- Coverage: X%
+
+### Linting
+- Errors: X | Warnings: Y
+
+### Build
+- Status: Success | Failed
+- Duration: Xs
+
+### Issues Found
+1. Issue description - severity - location
+```
+
+## Tool Permissions
+
+The validate skill uses execution-focused tools:
+- `bash`: Run tests, linters, build commands
+- `read`: View source and config files
+- `grep_search`: Find patterns
+
+**Limited**: Write access only for test artifacts
+
+## Guidelines
+
+- Report results objectively and completely
+- Prioritize critical issues over minor warnings
+- Provide actionable feedback for failures
+- Track validation history for regression detection
+- Exit early on critical failures
+- Include relevant context for debugging failures
+
+<!-- CUSTOM IMPLEMENTATION START -->
+<!-- User customizations preserved here -->
+<!-- CUSTOM IMPLEMENTATION END -->
