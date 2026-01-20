@@ -1,0 +1,165 @@
+---
+name: {{name}}
+contextType: {{contextType}}
+enabled: {{enabled}}
+description: {{description}}
+---
+
+# Parallel Explore Skill
+
+Parallel codebase exploration capability for faster, broader context gathering.
+
+## Purpose
+
+This skill provides the ability to:
+- Explore multiple areas of the codebase simultaneously
+- Coordinate parallel investigation tasks
+- Merge and deduplicate findings from multiple exploration threads
+- Maximize exploration efficiency for large codebases
+- Reduce latency in context gathering operations
+
+## Context Type
+
+**{{contextType}}**: Executes in a forked context, spawning multiple parallel exploration threads that report back consolidated findings.
+
+## Parallel Exploration Strategies
+
+### Domain Partitioning
+
+Divide the codebase by logical boundaries:
+- **By Directory**: Parallel exploration of different directories
+- **By Module**: Simultaneous analysis of separate modules
+- **By Layer**: Concurrent exploration of frontend/backend/shared
+- **By Feature**: Parallel investigation of feature boundaries
+
+### Query Parallelization
+
+Execute multiple search operations concurrently:
+- **Pattern Search**: Multiple grep patterns in parallel
+- **File Discovery**: Concurrent glob operations
+- **Symbol Lookup**: Parallel symbol resolution
+- **Dependency Tracing**: Concurrent import chain analysis
+
+### Aggregation Patterns
+
+Combine results from parallel operations:
+- **Merge**: Combine findings from all threads
+- **Deduplicate**: Remove redundant discoveries
+- **Rank**: Prioritize results by relevance
+- **Filter**: Apply post-aggregation filtering
+
+## Coordination Protocol
+
+### Task Distribution
+
+```markdown
+## Exploration Task Manifest
+
+### Thread 1: Core Logic
+- Target: src/core/**
+- Pattern: Function definitions, class hierarchies
+- Priority: High
+
+### Thread 2: API Layer
+- Target: src/api/**
+- Pattern: Route handlers, middleware
+- Priority: High
+
+### Thread 3: Tests
+- Target: test/**
+- Pattern: Test patterns, fixtures
+- Priority: Medium
+
+### Thread 4: Configuration
+- Target: *.config.*, .env*
+- Pattern: Configuration schemas
+- Priority: Low
+```
+
+### Result Aggregation
+
+```markdown
+## Consolidated Exploration Results
+
+### Summary
+- Threads completed: 4/4
+- Total files analyzed: 156
+- Unique patterns found: 23
+- Exploration time: 12s (vs ~45s sequential)
+
+### Findings by Thread
+1. Core Logic: [findings...]
+2. API Layer: [findings...]
+3. Tests: [findings...]
+4. Configuration: [findings...]
+
+### Merged Insights
+- Cross-cutting patterns discovered
+- Dependency relationships mapped
+- Architecture overview synthesized
+```
+
+## Output Format
+
+Parallel exploration results should track thread status and merge cleanly:
+
+```markdown
+## Parallel Exploration Report
+
+### Execution Status
+| Thread | Target | Status | Duration |
+|--------|--------|--------|----------|
+| 1 | src/core | Complete | 3.2s |
+| 2 | src/api | Complete | 2.8s |
+| 3 | test | Complete | 4.1s |
+| 4 | config | Complete | 1.5s |
+
+### Aggregated Findings
+
+#### Files Discovered (42 total)
+- src/core/engine.ts - Main processing engine
+- src/api/routes.ts - API route definitions
+- ...
+
+#### Patterns Detected
+- Repository pattern: src/core/repositories/*
+- Factory pattern: src/core/factories/*
+- Middleware chain: src/api/middleware/*
+
+#### Dependency Map
+- Core depends on: [utils, types, config]
+- API depends on: [core, middleware, validators]
+
+### Cross-Thread Insights
+- Shared utilities found across 3 threads
+- Common type definitions in src/types
+- Circular dependency detected: core <-> api
+```
+
+## Tool Permissions
+
+The parallel-explore skill uses read-only analysis tools:
+- `read`: View file contents across threads
+- `grep_search`: Parallel pattern searches
+- `file_search`: Concurrent file discovery
+- `list_dir`: Directory traversal
+- `glob`: Pattern-based file matching
+
+**Denied**: `edit`, `bash`, `write` (no modifications)
+
+## Guidelines
+
+- Partition exploration tasks to maximize parallelism
+- Avoid redundant work across threads
+- Merge results with deduplication
+- Report thread status for observability
+- Coordinate with base explore skill for focused analysis
+- Use efficient partitioning strategies based on codebase structure
+- Set reasonable thread limits to avoid resource exhaustion
+- Prioritize threads for incremental results delivery
+- Handle thread failures gracefully with partial results
+- Cache thread results for re-aggregation if needed
+
+<!-- CUSTOM IMPLEMENTATION START -->
+<!-- User customizations preserved here -->
+<!-- CUSTOM IMPLEMENTATION END -->

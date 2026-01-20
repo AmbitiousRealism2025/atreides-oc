@@ -12,9 +12,18 @@ import {
   AgentGenerator,
   createAgentGenerator,
   generateMVPAgents,
+  generatePostMVPAgents,
+  generateAllAgents,
   MVP_AGENT_NAMES,
+  POST_MVP_AGENT_NAMES,
+  ALL_AGENT_NAMES,
   isMVPAgent,
+  isPostMVPAgent,
+  isValidAgent,
   DEFAULT_AGENT_MODELS,
+  DEFAULT_POST_MVP_AGENT_MODELS,
+  ALL_DEFAULT_AGENT_MODELS,
+  AGENT_DISPLAY_NAMES,
   type AgentConfig,
   type AgentGenerationOptions,
 } from "../../src/generators/index.js";
@@ -607,6 +616,317 @@ enabled: true
 
       const template = await generator.loadTemplate("test");
       expect(template).toContain("# Test Agent");
+    });
+  });
+
+  // ===========================================================================
+  // Post-MVP Agent Type Guards and Constants
+  // ===========================================================================
+
+  describe("isPostMVPAgent", () => {
+    test("returns true for valid Post-MVP agent names", () => {
+      expect(isPostMVPAgent("frontend-ui-ux")).toBe(true);
+      expect(isPostMVPAgent("document-writer")).toBe(true);
+      expect(isPostMVPAgent("general")).toBe(true);
+    });
+
+    test("returns false for MVP agent names", () => {
+      expect(isPostMVPAgent("stilgar")).toBe(false);
+      expect(isPostMVPAgent("explore")).toBe(false);
+      expect(isPostMVPAgent("librarian")).toBe(false);
+      expect(isPostMVPAgent("build")).toBe(false);
+      expect(isPostMVPAgent("plan")).toBe(false);
+    });
+
+    test("returns false for unknown agent names", () => {
+      expect(isPostMVPAgent("unknown")).toBe(false);
+      expect(isPostMVPAgent("invalid")).toBe(false);
+    });
+  });
+
+  describe("isValidAgent", () => {
+    test("returns true for all MVP agent names", () => {
+      for (const name of MVP_AGENT_NAMES) {
+        expect(isValidAgent(name)).toBe(true);
+      }
+    });
+
+    test("returns true for all Post-MVP agent names", () => {
+      for (const name of POST_MVP_AGENT_NAMES) {
+        expect(isValidAgent(name)).toBe(true);
+      }
+    });
+
+    test("returns false for unknown agent names", () => {
+      expect(isValidAgent("unknown")).toBe(false);
+      expect(isValidAgent("invalid")).toBe(false);
+    });
+  });
+
+  describe("POST_MVP_AGENT_NAMES", () => {
+    test("contains exactly 3 Post-MVP agents", () => {
+      expect(POST_MVP_AGENT_NAMES.length).toBe(3);
+    });
+
+    test("contains all expected Post-MVP agents", () => {
+      expect(POST_MVP_AGENT_NAMES).toContain("frontend-ui-ux");
+      expect(POST_MVP_AGENT_NAMES).toContain("document-writer");
+      expect(POST_MVP_AGENT_NAMES).toContain("general");
+    });
+  });
+
+  describe("ALL_AGENT_NAMES", () => {
+    test("contains all 8 agents (MVP + Post-MVP)", () => {
+      expect(ALL_AGENT_NAMES.length).toBe(8);
+    });
+
+    test("contains all MVP agents", () => {
+      for (const name of MVP_AGENT_NAMES) {
+        expect(ALL_AGENT_NAMES).toContain(name);
+      }
+    });
+
+    test("contains all Post-MVP agents", () => {
+      for (const name of POST_MVP_AGENT_NAMES) {
+        expect(ALL_AGENT_NAMES).toContain(name);
+      }
+    });
+  });
+
+  describe("DEFAULT_POST_MVP_AGENT_MODELS", () => {
+    test("has model for each Post-MVP agent", () => {
+      for (const name of POST_MVP_AGENT_NAMES) {
+        expect(DEFAULT_POST_MVP_AGENT_MODELS[name]).toBeDefined();
+      }
+    });
+
+    test("uses haiku for general agent", () => {
+      expect(DEFAULT_POST_MVP_AGENT_MODELS.general).toBe("claude-haiku-4-5");
+    });
+
+    test("uses sonnet for frontend-ui-ux agent", () => {
+      expect(DEFAULT_POST_MVP_AGENT_MODELS["frontend-ui-ux"]).toBe("claude-sonnet-4");
+    });
+
+    test("uses sonnet for document-writer agent", () => {
+      expect(DEFAULT_POST_MVP_AGENT_MODELS["document-writer"]).toBe("claude-sonnet-4");
+    });
+  });
+
+  describe("ALL_DEFAULT_AGENT_MODELS", () => {
+    test("has model for all agents", () => {
+      for (const name of ALL_AGENT_NAMES) {
+        expect(ALL_DEFAULT_AGENT_MODELS[name]).toBeDefined();
+      }
+    });
+
+    test("includes all MVP agent models", () => {
+      for (const name of MVP_AGENT_NAMES) {
+        expect(ALL_DEFAULT_AGENT_MODELS[name]).toBe(DEFAULT_AGENT_MODELS[name]);
+      }
+    });
+
+    test("includes all Post-MVP agent models", () => {
+      for (const name of POST_MVP_AGENT_NAMES) {
+        expect(ALL_DEFAULT_AGENT_MODELS[name]).toBe(DEFAULT_POST_MVP_AGENT_MODELS[name]);
+      }
+    });
+  });
+
+  describe("AGENT_DISPLAY_NAMES", () => {
+    test("has display name for all agents", () => {
+      for (const name of ALL_AGENT_NAMES) {
+        expect(AGENT_DISPLAY_NAMES[name]).toBeDefined();
+        expect(AGENT_DISPLAY_NAMES[name].length).toBeGreaterThan(0);
+      }
+    });
+
+    test("has correct display names for MVP agents", () => {
+      expect(AGENT_DISPLAY_NAMES.stilgar).toBe("Stilgar");
+      expect(AGENT_DISPLAY_NAMES.explore).toBe("Explore");
+      expect(AGENT_DISPLAY_NAMES.librarian).toBe("Librarian");
+      expect(AGENT_DISPLAY_NAMES.build).toBe("Build");
+      expect(AGENT_DISPLAY_NAMES.plan).toBe("Plan");
+    });
+
+    test("has correct display names for Post-MVP agents", () => {
+      expect(AGENT_DISPLAY_NAMES["frontend-ui-ux"]).toBe("Frontend Architect");
+      expect(AGENT_DISPLAY_NAMES["document-writer"]).toBe("Documentation Writer");
+      expect(AGENT_DISPLAY_NAMES.general).toBe("Research Agent");
+    });
+  });
+
+  // ===========================================================================
+  // Post-MVP Agent Template Loading and Generation
+  // ===========================================================================
+
+  describe("Post-MVP Agent Template Loading", () => {
+    test("loads templates for all Post-MVP agents", async () => {
+      const generator = createAgentGenerator({
+        outputDir: testDir,
+        templateDir,
+      });
+
+      for (const name of POST_MVP_AGENT_NAMES) {
+        const template = await generator.loadTemplate(name);
+        expect(template).toBeDefined();
+        expect(template.length).toBeGreaterThan(100);
+        expect(template).toContain(`name: ${name}`);
+      }
+    });
+
+    test("frontend-ui-ux template has correct content", async () => {
+      const generator = createAgentGenerator({
+        outputDir: testDir,
+        templateDir,
+      });
+
+      const template = await generator.loadTemplate("frontend-ui-ux");
+      expect(template).toContain("displayName: Frontend Architect");
+      expect(template).toContain("## Purpose");
+      expect(template).toContain("## Responsibilities");
+      expect(template).toContain("UI component design");
+      expect(template).toContain("accessibility");
+    });
+
+    test("document-writer template has correct content", async () => {
+      const generator = createAgentGenerator({
+        outputDir: testDir,
+        templateDir,
+      });
+
+      const template = await generator.loadTemplate("document-writer");
+      expect(template).toContain("displayName: Documentation Writer");
+      expect(template).toContain("## Purpose");
+      expect(template).toContain("## Responsibilities");
+      expect(template).toContain("Technical documentation");
+    });
+
+    test("general template has correct content", async () => {
+      const generator = createAgentGenerator({
+        outputDir: testDir,
+        templateDir,
+      });
+
+      const template = await generator.loadTemplate("general");
+      expect(template).toContain("displayName: Research Agent");
+      expect(template).toContain("## Purpose");
+      expect(template).toContain("## Responsibilities");
+      expect(template).toContain("General research");
+    });
+  });
+
+  describe("Post-MVP Agent File Generation", () => {
+    test("generates all 3 Post-MVP agent files", async () => {
+      const generator = createAgentGenerator({
+        outputDir: testDir,
+        templateDir,
+      });
+
+      const configs: AgentConfig[] = POST_MVP_AGENT_NAMES.map(name => ({
+        name,
+        displayName: AGENT_DISPLAY_NAMES[name],
+        model: DEFAULT_POST_MVP_AGENT_MODELS[name],
+        enabled: true,
+      }));
+
+      const results = await generator.generateAgentFiles(configs);
+
+      expect(results.length).toBe(3);
+      expect(results.every(r => r.created)).toBe(true);
+      expect(results.every(r => !r.error)).toBe(true);
+
+      // Verify all files exist
+      for (const name of POST_MVP_AGENT_NAMES) {
+        const filePath = join(testDir, ".opencode", "agent", `${name}.md`);
+        const fileExists = await access(filePath).then(() => true).catch(() => false);
+        expect(fileExists).toBe(true);
+      }
+    });
+
+    test("renders Post-MVP templates correctly", async () => {
+      const generator = createAgentGenerator({
+        outputDir: testDir,
+        templateDir,
+      });
+
+      for (const name of POST_MVP_AGENT_NAMES) {
+        const template = await generator.loadTemplate(name);
+        const config: AgentConfig = {
+          name,
+          displayName: AGENT_DISPLAY_NAMES[name],
+          model: DEFAULT_POST_MVP_AGENT_MODELS[name],
+          enabled: true,
+        };
+
+        const rendered = generator.renderTemplate(template, config);
+        expect(rendered).toContain(`name: ${name}`);
+        expect(rendered).toContain(`model: ${DEFAULT_POST_MVP_AGENT_MODELS[name]}`);
+        expect(rendered).not.toContain("{{");
+        expect(rendered).not.toContain("}}");
+      }
+    });
+  });
+
+  // ===========================================================================
+  // generatePostMVPAgents Convenience Function
+  // ===========================================================================
+
+  describe("generatePostMVPAgents", () => {
+    test("generates all Post-MVP agents with manifest tracking", async () => {
+      const configs: AgentConfig[] = POST_MVP_AGENT_NAMES.map(name => ({
+        name,
+        displayName: AGENT_DISPLAY_NAMES[name],
+        model: DEFAULT_POST_MVP_AGENT_MODELS[name],
+        enabled: true,
+      }));
+
+      const results = await generatePostMVPAgents(configs, testDir, { templateDir });
+
+      expect(results.length).toBe(3);
+      expect(results.every(r => r.created)).toBe(true);
+
+      // Verify manifest was created
+      const manifestPath = join(testDir, ".atreides-manifest.json");
+      const manifestExists = await access(manifestPath).then(() => true).catch(() => false);
+      expect(manifestExists).toBe(true);
+
+      const manifestContent = await readFile(manifestPath, "utf-8");
+      const manifest = JSON.parse(manifestContent);
+      expect(Object.keys(manifest.files).length).toBe(3);
+    });
+  });
+
+  // ===========================================================================
+  // generateAllAgents Convenience Function
+  // ===========================================================================
+
+  describe("generateAllAgents", () => {
+    test("generates all 8 agents with manifest tracking", async () => {
+      const configs: AgentConfig[] = ALL_AGENT_NAMES.map(name => ({
+        name,
+        displayName: AGENT_DISPLAY_NAMES[name],
+        model: ALL_DEFAULT_AGENT_MODELS[name],
+        enabled: true,
+      }));
+
+      const results = await generateAllAgents(configs, testDir, { templateDir });
+
+      expect(results.length).toBe(8);
+      expect(results.every(r => r.created)).toBe(true);
+
+      // Verify manifest was created with all files
+      const manifestPath = join(testDir, ".atreides-manifest.json");
+      const manifestContent = await readFile(manifestPath, "utf-8");
+      const manifest = JSON.parse(manifestContent);
+      expect(Object.keys(manifest.files).length).toBe(8);
+
+      // Verify all agent files exist
+      for (const name of ALL_AGENT_NAMES) {
+        const filePath = join(testDir, ".opencode", "agent", `${name}.md`);
+        const fileExists = await access(filePath).then(() => true).catch(() => false);
+        expect(fileExists).toBe(true);
+      }
     });
   });
 });

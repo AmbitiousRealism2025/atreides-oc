@@ -1,0 +1,160 @@
+---
+name: {{name}}
+contextType: {{contextType}}
+enabled: {{enabled}}
+description: {{description}}
+---
+
+# Checkpoint Skill
+
+State checkpointing and backup capability for safe workflow recovery.
+
+## Purpose
+
+This skill provides the ability to:
+- Save workflow state at critical points
+- Create restore points before risky operations
+- Track file changes for potential rollback
+- Preserve session context across recovery
+- Enable safe experimentation with undo capability
+
+## Context Type
+
+**{{contextType}}**: Executes in main conversation context to maintain checkpoint state synchronized with session state.
+
+## Checkpoint Types
+
+### Workflow Checkpoints
+
+- **Phase Checkpoint**: Save state at workflow phase transitions
+- **Pre-Operation Checkpoint**: Save before significant changes
+- **Manual Checkpoint**: User-requested save points
+- **Auto Checkpoint**: Automatic periodic saves
+
+### File Checkpoints
+
+- **Single File**: Snapshot individual file state
+- **Multi-File**: Snapshot related file group
+- **Directory**: Snapshot entire directory tree
+- **Git-Aware**: Leverage git for versioning
+
+### Session Checkpoints
+
+- **Context Snapshot**: Save conversation context
+- **State Snapshot**: Save session variables
+- **Progress Snapshot**: Save todo and phase state
+
+## Checkpoint Operations
+
+### Create Checkpoint
+
+```markdown
+## Checkpoint Created
+
+### Metadata
+- ID: chk_20240115_143022
+- Name: "Before database migration"
+- Type: Pre-Operation
+- Timestamp: 2024-01-15T14:30:22Z
+
+### Contents
+- Files: 3 tracked
+- Session state: Saved
+- Workflow phase: Implementation
+
+### Usage
+Restore with: /restore chk_20240115_143022
+```
+
+### List Checkpoints
+
+```markdown
+## Available Checkpoints
+
+| ID | Name | Type | Created | Files |
+|----|------|------|---------|-------|
+| chk_001 | Start of session | Auto | 14:00 | 0 |
+| chk_002 | Before refactor | Manual | 14:15 | 5 |
+| chk_003 | Phase: Implementation | Phase | 14:30 | 8 |
+```
+
+### Restore Checkpoint
+
+```markdown
+## Checkpoint Restored
+
+### Restored From
+- ID: chk_002
+- Name: "Before refactor"
+
+### Changes Reverted
+- path/to/file1.ts: Restored to previous version
+- path/to/file2.ts: Restored to previous version
+
+### Current State
+- Workflow phase: Exploration
+- Session context: Restored
+```
+
+## Storage Strategy
+
+### File Storage
+
+- Location: `.opencode/checkpoints/`
+- Format: JSON metadata + file snapshots
+- Retention: Configurable (default: 10 checkpoints)
+- Cleanup: Automatic pruning of old checkpoints
+
+### Git Integration
+
+When in a git repository:
+- Create git stash for file checkpoints
+- Use git commits for permanent checkpoints
+- Tag significant checkpoints
+- Leverage git diff for change tracking
+
+## Output Format
+
+Checkpoint status should be clearly reported:
+
+```markdown
+## Checkpoint Status
+
+### Active Checkpoint
+- ID: chk_003
+- Created: 5 minutes ago
+- Files tracked: 8
+
+### Changes Since Checkpoint
+- Modified: 2 files
+- Added: 1 file
+- Deleted: 0 files
+
+### Recommendation
+Consider creating new checkpoint before proceeding with database changes.
+```
+
+## Tool Permissions
+
+The checkpoint skill uses state management tools:
+- `read`: Read files for snapshot
+- `write`: Write checkpoint metadata
+- `bash`: Execute git commands for versioning
+- `list_dir`: Enumerate files for tracking
+
+**Special**: Full access needed for state management
+
+## Guidelines
+
+- Create checkpoints before risky operations
+- Name checkpoints descriptively
+- Limit checkpoint retention to avoid bloat
+- Prefer git integration when available
+- Warn when changes since last checkpoint are significant
+- Coordinate with error recovery for automatic checkpoints
+- Make restore operations atomic (all or nothing)
+- Log all checkpoint operations for audit
+
+<!-- CUSTOM IMPLEMENTATION START -->
+<!-- User customizations preserved here -->
+<!-- CUSTOM IMPLEMENTATION END -->

@@ -35,5 +35,24 @@ declare module "@opencode-ai/plugin" {
       sessionId: string;
       summary: string;
     }) => { summary: string } | Promise<{ summary: string }>;
+    "chat.params"?: (context: {
+      sessionId: string;
+      params: ChatParams;
+    }) => { params: ChatParams } | Promise<{ params: ChatParams }>;
+  }
+
+  /**
+   * Chat parameters that can be modified by the chat.params hook.
+   * Includes model selection and inference settings.
+   */
+  export interface ChatParams {
+    /** Model identifier to use for the chat (e.g., "claude-sonnet-4", "claude-opus-4") */
+    model?: string;
+    /** Maximum tokens for model response */
+    maxTokens?: number;
+    /** Temperature for response generation (0.0-1.0) */
+    temperature?: number;
+    /** Optional system prompt override */
+    system?: string;
   }
 }

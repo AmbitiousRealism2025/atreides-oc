@@ -1,0 +1,239 @@
+---
+name: {{name}}
+contextType: {{contextType}}
+enabled: {{enabled}}
+description: {{description}}
+---
+
+# Quality Gate Skill
+
+Quality gate enforcement capability for ensuring code meets standards before proceeding.
+
+## Purpose
+
+This skill provides the ability to:
+- Define and enforce quality thresholds
+- Block progression when quality criteria not met
+- Provide detailed reports on quality violations
+- Track quality metrics over time
+- Configure project-specific quality requirements
+
+## Context Type
+
+**{{contextType}}**: Executes in a forked context, evaluating code quality against defined gates and reporting pass/fail status.
+
+## Quality Gate Categories
+
+### Test Coverage Gate
+
+Enforce minimum test coverage thresholds:
+- **Line Coverage**: Minimum percentage of lines covered
+- **Branch Coverage**: Minimum branch coverage
+- **Function Coverage**: All public functions tested
+- **Critical Path Coverage**: 100% coverage of critical paths
+
+### Code Quality Gate
+
+Enforce code quality standards:
+- **Lint Errors**: Zero lint errors allowed
+- **Lint Warnings**: Maximum warning threshold
+- **Complexity**: Maximum cyclomatic complexity
+- **Duplication**: Maximum code duplication percentage
+
+### Security Gate
+
+Enforce security requirements:
+- **Vulnerability Scan**: No known vulnerabilities
+- **Dependency Audit**: All dependencies audited
+- **Secret Detection**: No secrets in code
+- **Security Lint**: Pass security-focused linting
+
+### Performance Gate
+
+Enforce performance baselines:
+- **Bundle Size**: Maximum bundle size
+- **Build Time**: Maximum build duration
+- **Test Duration**: Maximum test suite time
+- **Memory Usage**: Maximum memory footprint
+
+## Gate Configuration
+
+### Gate Definition
+
+```yaml
+# .opencode/quality-gates.yaml
+gates:
+  test-coverage:
+    enabled: true
+    blocking: true
+    thresholds:
+      lines: 80
+      branches: 75
+      functions: 90
+      statements: 80
+
+  code-quality:
+    enabled: true
+    blocking: true
+    thresholds:
+      lint-errors: 0
+      lint-warnings: 10
+      complexity: 15
+      duplication: 5
+
+  security:
+    enabled: true
+    blocking: true
+    checks:
+      - vulnerability-scan
+      - dependency-audit
+      - secret-detection
+
+  performance:
+    enabled: false
+    blocking: false
+    thresholds:
+      bundle-size-kb: 500
+      build-time-seconds: 60
+```
+
+### Gate Evaluation
+
+```markdown
+## Quality Gate Evaluation
+
+### Context
+- Branch: feature/user-auth
+- Commit: abc123
+- Files changed: 12
+
+### Gate Results
+
+#### Test Coverage Gate: PASS
+| Metric | Required | Actual | Status |
+|--------|----------|--------|--------|
+| Lines | 80% | 85% | PASS |
+| Branches | 75% | 78% | PASS |
+| Functions | 90% | 92% | PASS |
+| Statements | 80% | 84% | PASS |
+
+#### Code Quality Gate: FAIL
+| Metric | Required | Actual | Status |
+|--------|----------|--------|--------|
+| Lint Errors | 0 | 2 | FAIL |
+| Lint Warnings | ≤10 | 8 | PASS |
+| Complexity | ≤15 | 12 | PASS |
+| Duplication | ≤5% | 3% | PASS |
+
+**Blocking Issues**:
+1. src/auth/login.ts:42 - Unexpected console.log
+2. src/auth/validate.ts:15 - Missing return type
+
+#### Security Gate: PASS
+| Check | Status |
+|-------|--------|
+| Vulnerability Scan | PASS (0 found) |
+| Dependency Audit | PASS |
+| Secret Detection | PASS |
+
+### Overall: BLOCKED
+- 1 of 3 gates failed
+- Must fix: Code Quality Gate
+```
+
+## Output Format
+
+Quality gate reports should be clear and actionable:
+
+```markdown
+## Quality Gate Report
+
+### Status: BLOCKED
+
+### Summary
+| Gate | Status | Blocking |
+|------|--------|----------|
+| Test Coverage | PASS | Yes |
+| Code Quality | FAIL | Yes |
+| Security | PASS | Yes |
+| Performance | SKIP | No |
+
+### Failed Gate: Code Quality
+
+#### Violations
+1. **Lint Error**: `no-console`
+   - File: src/auth/login.ts:42
+   - Message: Unexpected console statement
+   - Fix: Remove console.log or use logger
+
+2. **Lint Error**: `explicit-function-return-type`
+   - File: src/auth/validate.ts:15
+   - Message: Missing return type on function
+   - Fix: Add explicit return type
+
+#### Resolution Required
+- Fix 2 lint errors to pass gate
+- Estimated effort: 5 minutes
+
+### Passed Gates
+
+#### Test Coverage
+- All thresholds met
+- New code coverage: 92%
+
+#### Security
+- No vulnerabilities found
+- Dependencies up to date
+
+### Recommendations
+1. Fix blocking lint errors immediately
+2. Consider adding explicit types project-wide
+3. Configure pre-commit hook to catch lint errors early
+
+### Commands
+- Fix lint: `npm run lint:fix`
+- Re-run gates: `atreides validate --gates`
+```
+
+## Gate Behaviors
+
+### Blocking vs Non-Blocking
+
+- **Blocking Gates**: Must pass before proceeding (merge, deploy)
+- **Non-Blocking Gates**: Report only, don't block workflow
+- **Warning Gates**: Soft failures that become blocking over time
+
+### Gate Bypass
+
+For emergency situations:
+- Require explicit bypass flag
+- Log bypass reason
+- Notify team of bypass
+- Track bypass frequency
+
+## Tool Permissions
+
+The quality-gate skill uses validation-focused tools:
+- `bash`: Run test, lint, build commands
+- `read`: Analyze source files and configs
+- `grep_search`: Find patterns for quality checks
+- `file_search`: Locate relevant files
+
+**Output**: Reports only, no modifications (validation focus)
+
+## Guidelines
+
+- Define gates based on project maturity
+- Start with lenient thresholds, tighten over time
+- Make blocking gates achievable (no impossible standards)
+- Provide clear fix instructions for failures
+- Track gate trends to identify systemic issues
+- Coordinate with validate skill for detailed checks
+- Allow gate configuration per project
+- Report both blocking and informational results
+- Enable emergency bypass with audit trail
+- Integrate with CI/CD for automated gate checks
+
+<!-- CUSTOM IMPLEMENTATION START -->
+<!-- User customizations preserved here -->
+<!-- CUSTOM IMPLEMENTATION END -->

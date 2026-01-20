@@ -1,0 +1,210 @@
+---
+name: {{name}}
+contextType: {{contextType}}
+enabled: {{enabled}}
+description: {{description}}
+---
+
+# Incremental Refactor Skill
+
+Incremental refactoring with validation between steps for safe, reversible transformations.
+
+## Purpose
+
+This skill provides the ability to:
+- Apply refactoring changes in small, validated increments
+- Verify correctness after each transformation step
+- Enable easy rollback if issues are detected
+- Track refactoring progress across multiple steps
+- Coordinate with checkpoint skill for state preservation
+
+## Context Type
+
+**{{contextType}}**: Executes in a forked context, applying incremental changes with validation gates between steps.
+
+## Incremental Refactoring Process
+
+### Step-by-Step Approach
+
+Unlike bulk refactoring, incremental refactoring:
+- Makes one logical change at a time
+- Validates after each change (tests, lint, type check)
+- Commits or checkpoints after successful validation
+- Allows review and approval between steps
+- Supports pause/resume for long refactoring sessions
+
+### Validation Gates
+
+Each step must pass through validation:
+1. **Syntax Check**: Code parses without errors
+2. **Type Check**: No type errors introduced
+3. **Lint Check**: Passes linting rules
+4. **Test Check**: All tests pass
+5. **Build Check**: Project builds successfully
+
+## Refactoring Steps
+
+### Step Definition
+
+```markdown
+## Refactoring Step 3 of 7
+
+### Change
+- Type: Rename Symbol
+- Target: `getUserById` -> `fetchUserById`
+- Files affected: 5
+
+### Pre-Validation
+- [ ] Syntax valid
+- [ ] Types checked
+- [ ] Tests passing (12/12)
+
+### Application
+- [ ] Apply rename in source
+- [ ] Update all references
+- [ ] Update tests
+
+### Post-Validation
+- [ ] Syntax valid
+- [ ] Types checked
+- [ ] Tests passing (12/12)
+
+### Checkpoint
+- Created: checkpoint_step_3_20240115_143022
+- Rollback command: `atreides rollback checkpoint_step_3_20240115_143022`
+```
+
+### Step Sequence
+
+```markdown
+## Incremental Refactoring Plan
+
+### Target: Extract Authentication Module
+
+#### Step 1: Create Module Structure
+- Create src/auth/index.ts
+- Add module exports
+- Validation: Build check
+
+#### Step 2: Move User Types
+- Move UserCredentials type
+- Move AuthToken type
+- Update imports in 3 files
+- Validation: Type check
+
+#### Step 3: Move validateCredentials
+- Move function to auth module
+- Update 5 call sites
+- Validation: Test check
+
+#### Step 4: Move generateToken
+- Move function to auth module
+- Update 3 call sites
+- Validation: Test check
+
+#### Step 5: Move verifyToken
+- Move function to auth module
+- Update 8 call sites
+- Validation: Full validation
+
+#### Step 6: Clean Up Old Location
+- Remove migrated code
+- Update re-exports if needed
+- Validation: Full validation
+```
+
+## Output Format
+
+Incremental refactoring progress should be clearly tracked:
+
+```markdown
+## Incremental Refactoring Report
+
+### Progress: 4/7 Steps Complete
+
+### Current Step: Step 5 - Move verifyToken
+
+### Step History
+| Step | Description | Status | Checkpoint |
+|------|-------------|--------|------------|
+| 1 | Create module structure | PASS | chk_001 |
+| 2 | Move user types | PASS | chk_002 |
+| 3 | Move validateCredentials | PASS | chk_003 |
+| 4 | Move generateToken | PASS | chk_004 |
+| 5 | Move verifyToken | IN PROGRESS | - |
+| 6 | Update middleware | PENDING | - |
+| 7 | Clean up old location | PENDING | - |
+
+### Current Step Details
+- Files to modify: 8
+- Files modified: 3/8
+- Tests affected: 5
+- Tests passing: 5/5
+
+### Validation Status
+- [x] Syntax check: PASS
+- [x] Type check: PASS
+- [x] Lint check: PASS
+- [x] Test check: PASS (pending 5 tests after completion)
+- [ ] Build check: PENDING
+
+### Rollback Points
+- Latest safe state: chk_004
+- Current changes: Uncommitted (3 files)
+```
+
+## Recovery Protocol
+
+### On Validation Failure
+
+1. **Identify Failure**: Report which validation failed and why
+2. **Assess Impact**: Determine if partial changes were applied
+3. **Rollback Decision**: Offer rollback to last checkpoint
+4. **Fix Forward**: Alternatively, fix the issue before proceeding
+
+### Rollback Procedure
+
+```markdown
+## Rollback Required
+
+### Failure: Type check failed at Step 5
+- Error: Property 'token' is missing in type 'AuthResult'
+- File: src/api/middleware/auth.ts:42
+
+### Options
+1. **Rollback to Step 4**: Restore checkpoint chk_004
+2. **Fix and Retry**: Add missing property, re-run validation
+3. **Pause Refactoring**: Save state for later review
+
+### Recommendation: Fix and Retry
+- Small fix required (add property)
+- No cascading changes expected
+```
+
+## Tool Permissions
+
+The incremental-refactor skill uses controlled modification tools:
+- `read`: Analyze source code and dependencies
+- `edit`: Apply incremental changes
+- `bash`: Run validation commands (tests, lint, build)
+- `grep_search`: Find references for updates
+- `checkpoint`: Create restore points (when available)
+
+**Required**: Checkpoint coordination for safe rollback
+
+## Guidelines
+
+- Always validate after each change, never skip
+- Create checkpoints before risky changes
+- Keep steps small and focused
+- Document each step clearly for review
+- Prefer multiple small steps over large leaps
+- Coordinate with checkpoint skill for state management
+- Track all modified files per step
+- Enable pause/resume for long refactoring sessions
+- Report clear rollback instructions if validation fails
+- Maintain step history for audit trail
+
+<!-- CUSTOM IMPLEMENTATION START -->
+<!-- User customizations preserved here -->
+<!-- CUSTOM IMPLEMENTATION END -->

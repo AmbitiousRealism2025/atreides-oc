@@ -353,3 +353,37 @@ export async function generateMVPAgents(
   const { results } = await generator.generateWithManifest(configs, projectPath);
   return results;
 }
+
+/**
+ * Convenience function to generate Post-MVP agent files (Phase 1)
+ */
+export async function generatePostMVPAgents(
+  configs: AgentConfig[],
+  projectPath: string,
+  options?: Partial<AgentGenerationOptions>
+): Promise<AgentGenerationResult[]> {
+  const generator = createAgentGenerator({
+    outputDir: projectPath,
+    ...options,
+  });
+
+  const { results } = await generator.generateWithManifest(configs, projectPath);
+  return results;
+}
+
+/**
+ * Convenience function to generate all agent files (MVP + Post-MVP)
+ */
+export async function generateAllAgents(
+  configs: AgentConfig[],
+  projectPath: string,
+  options?: Partial<AgentGenerationOptions>
+): Promise<AgentGenerationResult[]> {
+  const generator = createAgentGenerator({
+    outputDir: projectPath,
+    ...options,
+  });
+
+  const { results } = await generator.generateWithManifest(configs, projectPath);
+  return results;
+}

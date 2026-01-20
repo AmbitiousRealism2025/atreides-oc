@@ -76,6 +76,8 @@ import {
   createToolAfterHandler,
   createSystemTransformHandler,
   createCompactionHandler,
+  createChatParamsHandler,
+  initializeLoggingInfrastructure,
 } from "./handlers.js";
 import * as SessionManager from "./managers/session-manager.js";
 
@@ -124,6 +126,49 @@ export {
   type PendingTodosResult,
 } from "./managers/todo-enforcer.js";
 
+// Session logging and state persistence exports
+export {
+  SessionLogger,
+  getSessionLogger,
+  resetSessionLogger,
+  filterPii,
+  filterPiiFromObject,
+  type SessionLogLevel,
+  type SessionLogEvent,
+  type SessionLogEntry,
+  type SessionLoggerConfig,
+} from "../lib/session-logger.js";
+
+export {
+  StatePersistence,
+  getStatePersistence,
+  resetStatePersistence,
+  type PersistedSessionState,
+  type StatePersistenceConfig,
+} from "../lib/state-persistence.js";
+
+export {
+  initializeLoggingInfrastructure,
+  getSessionLoggerInstance,
+  getStatePersistenceInstance,
+  getNotificationManagerInstance,
+  getThinkModeManagerInstance,
+} from "./handlers.js";
+
+// Notification manager exports
+export {
+  NotificationManager,
+  getNotificationManager,
+  resetNotificationManager,
+} from "./managers/notification-manager.js";
+
+// Think Mode manager exports
+export {
+  ThinkModeManager,
+  getThinkModeManager,
+  resetThinkModeManager,
+} from "./managers/think-mode-manager.js";
+
 const logger = createLogger("atreides:plugin");
 
 export type AtreidesPluginFunction = (
@@ -139,9 +184,16 @@ export const AtreidesPlugin: AtreidesPluginFunction = async (context) => {
   const config = await loadConfig(projectPath);
   SessionManager.setDefaultConfig(config);
 
+  // Initialize logging, state persistence, and notification infrastructure
+  await initializeLoggingInfrastructure(config, context);
+
   logger.info("Plugin configured", {
     persona: config.identity.personaName,
     phaseTracking: config.workflow.enablePhaseTracking,
+    sessionLogging: config.logging.enableSessionLogging,
+    statePersistence: config.logging.enableStatePersistence,
+    notifications: config.notifications.enabled,
+    thinkMode: config.thinkMode.enabled,
   });
 
   const eventHandler = createEventHandler(config, context);
@@ -149,9 +201,10 @@ export const AtreidesPlugin: AtreidesPluginFunction = async (context) => {
   const toolBeforeHandler = createToolBeforeHandler(config);
   const toolAfterHandler = createToolAfterHandler(config);
   const systemTransformHandler = createSystemTransformHandler(config, projectPath);
-  const compactionHandler = createCompactionHandler(config);
+  const compactionHandlerFn = createCompactionHandler(config);
+  const chatParamsHandler = createChatParamsHandler(config);
 
-  return {
+  const hooks: PluginHooks = {
     event: wrapHook("event", eventHandler),
     stop: wrapHook("stop", stopHandler),
     "tool.execute.before": wrapHook("tool.execute.before", toolBeforeHandler),
@@ -162,9 +215,15 @@ export const AtreidesPlugin: AtreidesPluginFunction = async (context) => {
     ),
     "experimental.session.compacting": wrapHook(
       "experimental.session.compacting",
-      compactionHandler
+      compactionHandlerFn
     ),
   };
+
+  if (chatParamsHandler) {
+    hooks["chat.params"] = wrapHook("chat.params", chatParamsHandler);
+  }
+
+  return hooks;
 };
 
 export function getSessionState(sessionId: string): SessionState | undefined {
