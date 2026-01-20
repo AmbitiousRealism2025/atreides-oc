@@ -335,7 +335,16 @@ export async function mergeConfig(
 }
 
 /**
- * Merge AGENTS.md with structural detection
+ * Merge AGENTS.md with structural detection.
+ *
+ * Uses structural markdown parsing to:
+ * 1. Identify user-added sections (not in template)
+ * 2. Detect user-modified sections (same header, different content)
+ * 3. Merge template updates while preserving user changes
+ *
+ * When the original template content is unavailable, falls back to using
+ * the new template as the baseline. This prevents section duplication by
+ * treating only genuinely new sections as user-added.
  */
 export async function mergeAgentsMd(
   projectPath: string,
@@ -348,9 +357,16 @@ export async function mergeAgentsMd(
     const currentContent = await readFile(filePath, "utf-8");
 
     // Get original template content from manifest for accurate diff
-    const originalTemplate = manifestEntry
-      ? await getOriginalTemplateContent(manifestEntry)
-      : newTemplateContent;
+    // If unavailable (null), fall back to newTemplateContent to avoid
+    // treating all existing sections as user-added (fixes issue #2)
+    let originalTemplate: string;
+    if (manifestEntry) {
+      const fetchedOriginal = await getOriginalTemplateContent(manifestEntry);
+      // Fall back to new template if original can't be reconstructed
+      originalTemplate = fetchedOriginal ?? newTemplateContent;
+    } else {
+      originalTemplate = newTemplateContent;
+    }
 
     const mergeResult = structuralMergeMarkdown(
       currentContent,
@@ -497,14 +513,28 @@ export async function mergeAgentFile(
 }
 
 /**
- * Get original template content from manifest
- * (Placeholder - would need template version tracking in real implementation)
+ * Get original template content from manifest.
+ *
+ * When the original template cannot be reconstructed, returns `null` to signal
+ * that the caller should fall back to using the new template content as the
+ * baseline for comparison. This prevents treating all existing sections as
+ * user-added when we have no original reference.
+ *
+ * @param _entry - Manifest entry for the markdown file
+ * @returns Original template content, or null if unavailable
  */
-async function getOriginalTemplateContent(_entry: MarkdownFileEntry): Promise<string> {
+async function getOriginalTemplateContent(_entry: MarkdownFileEntry): Promise<string | null> {
   // In a real implementation, this would fetch the original template
-  // from the package at the version recorded in the manifest
-  // For now, we can't reconstruct the original, so we return empty
-  return "";
+  // from the package at the version recorded in the manifest.
+  //
+  // Options for future implementation:
+  // 1. Store template content in manifest (increases manifest size)
+  // 2. Tag templates with version and fetch from package cache
+  // 3. Use git history if available
+  //
+  // For now, return null to signal caller should use newTemplateContent
+  // as the baseline (safe fallback that avoids section duplication)
+  return null;
 }
 
 /**
