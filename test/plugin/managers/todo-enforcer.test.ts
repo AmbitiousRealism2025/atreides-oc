@@ -122,7 +122,8 @@ describe("TodoEnforcer - Todo Detection", () => {
 
     const todos = enforcer.getTodos(sessionId);
     expect(todos[0].id).not.toBe(todos[1].id);
-    expect(todos[0].id).toMatch(/^todo-\d+-[a-z0-9]+$/);
+    // Content-based SHA-256 hash IDs: todo-{12 hex chars}
+    expect(todos[0].id).toMatch(/^todo-[a-f0-9]{12}$/);
   });
 
   test("sets createdAt timestamp on detection", () => {

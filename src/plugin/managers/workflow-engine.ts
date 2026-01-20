@@ -454,28 +454,36 @@ export class WorkflowEngine {
       return currentPhase === "idle" ? "exploration" : currentPhase;
     }
 
-    // Priority 1: Check for implementation commands (most specific - state-modifying operations)
+    // Priority 1: Check for test commands (verification) - highest priority
+    // Test commands always indicate verification, regardless of other patterns
+    if (TEST_COMMAND_PATTERNS.some((p) => p.test(command))) {
+      logger.debug("Bash command matched test pattern", { command });
+      return "verification";
+    }
+
+    // Priority 2: Check for build/lint commands (verification)
+    // Build/lint are verification actions, check before implementation
+    if (BUILD_COMMAND_PATTERNS.some((p) => p.test(command))) {
+      logger.debug("Bash command matched build pattern", { command });
+      return "verification";
+    }
+
+    // Priority 3: Check for implementation commands (state-modifying operations)
     // These include package installs, git commits, file modifications
     if (IMPLEMENTATION_COMMAND_PATTERNS.some((p) => p.test(command))) {
       logger.debug("Bash command matched implementation pattern", { command });
       return "implementation";
     }
 
-    // Priority 2: Check for test commands (verification)
-    if (TEST_COMMAND_PATTERNS.some((p) => p.test(command))) {
-      logger.debug("Bash command matched test pattern", { command });
-      return "verification";
-    }
-
-    // Priority 3: Check for build/lint commands (verification)
-    if (BUILD_COMMAND_PATTERNS.some((p) => p.test(command))) {
-      logger.debug("Bash command matched build pattern", { command });
-      return "verification";
-    }
-
     // Priority 4: Check for exploration commands (read-only operations)
     // These include git status, file inspection, system inspection
+    // BUT only transition to exploration if not already in implementation phase
     if (EXPLORATION_COMMAND_PATTERNS.some((p) => p.test(command))) {
+      // Stay in implementation phase for read operations during implementation
+      if (currentPhase === "implementation") {
+        logger.debug("Exploration command during implementation - staying in phase", { command });
+        return "implementation";
+      }
       logger.debug("Bash command matched exploration pattern", { command });
       return "exploration";
     }
