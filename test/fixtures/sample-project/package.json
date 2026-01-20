@@ -1,0 +1,11 @@
+{
+  "name": "sample-project",
+  "version": "1.0.0",
+  "description": "Sample project for testing atreides-opencode plugin",
+  "type": "module",
+  "scripts": {
+    "build": "echo 'build complete'",
+    "test": "echo 'tests pass'",
+    "lint": "echo 'lint complete'"
+  }
+}

@@ -1,0 +1,55 @@
+---
+name: {{name}}
+contextType: {{contextType}}
+enabled: {{enabled}}
+description: {{description}}
+---
+
+# Base Skill
+
+Foundation skill template providing documentation and structure for all skills.
+
+## Purpose
+
+This skill serves as:
+- Reference documentation for the skill system
+- Template structure that other skills follow
+- Base configuration and metadata patterns
+
+## Context Type
+
+**{{contextType}}**: Executes in the main conversation context, maintaining full session state and workflow tracking.
+
+## Skill System Overview
+
+Skills are reusable capabilities that agents can invoke. Each skill:
+- Has a defined context type (main or fork)
+- Contains specific functionality and guidelines
+- Can be enabled/disabled per project
+- Preserves user customizations across updates
+
+### Context Types
+
+- **main**: Executes in the main conversation context. Maintains full session state, workflow tracking, and agent continuity. Use for orchestration, state management, and coordinated workflows.
+- **fork**: Executes in a forked/parallel context. Suitable for isolated operations that don't need full session state. Use for exploration, validation, and parallel tasks.
+
+## File Structure
+
+Skills are stored in `.opencode/skill/{name}/SKILL.md` with YAML frontmatter:
+
+```yaml
+---
+name: skill-name
+contextType: main | fork
+enabled: true | false
+description: Human-readable description
+---
+```
+
+## Usage
+
+Skills are invoked by agents based on task requirements. The orchestration layer determines when to use main vs fork context based on the skill's contextType.
+
+<!-- CUSTOM IMPLEMENTATION START -->
+<!-- User customizations preserved here -->
+<!-- CUSTOM IMPLEMENTATION END -->
