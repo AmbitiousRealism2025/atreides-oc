@@ -8,10 +8,11 @@
 export * from "./opencode-context.js";
 
 // Re-export commonly used mock factories from test-helpers
+// Note: createMockContext is NOT re-exported here - use the opencode-context.ts version instead
+// which includes notifications, logs, and shellCommands arrays for test capture
 export {
   createMockClient,
   createMockShell,
-  createMockContext,
   createMockProject,
   createMockConfig,
   createMinimalConfig,

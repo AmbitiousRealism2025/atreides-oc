@@ -255,8 +255,12 @@ export class TodoEnforcer {
           if (todo.completedAt) continue;
 
           // Check if the phrase matches or is contained in the todo description
+          // Require meaningful phrase length (at least 3 chars) to avoid false positives
           const normalizedPhrase = phrase.toLowerCase();
           const normalizedDesc = todo.description.toLowerCase();
+
+          // Skip very short phrases that could match anything
+          if (normalizedPhrase.length < 3) continue;
 
           if (
             normalizedDesc.includes(normalizedPhrase) ||
